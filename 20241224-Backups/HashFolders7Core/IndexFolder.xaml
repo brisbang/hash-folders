@@ -1,0 +1,21 @@
+﻿<Window x:Class="HashFolders.IndexFolder"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HashFolders"
+        mc:Ignorable="d"
+        Title="Index folder" Height="166" Width="447">
+    <Grid RenderTransformOrigin="0.569,0.855">
+        <Label Content="Folder:" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top"/>
+        <TextBox HorizontalAlignment="Left" Height="20" Margin="102,8,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="233" Name="tbFolder" TabIndex="0"/>
+        <Label Content="Num threads:" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.433,1.846"/>
+        <Button Content="Hash away" HorizontalAlignment="Left" Margin="347,36,0,0" VerticalAlignment="Top" Width="75" Name="btnHash" Click="btnHash_Click" RenderTransformOrigin="0.493,1.248" TabIndex="3"/>
+        <TextBox HorizontalAlignment="Left" Height="20" Margin="102,33,0,0" TextWrapping="Wrap" Text="8" VerticalAlignment="Top" Width="233" x:Name="tbNumThreads" TabIndex="2"/>
+        <Label Content="OneDrive user:" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.433,1.846"/>
+        <TextBox HorizontalAlignment="Left" Height="20" Margin="102,58,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="233" x:Name="tbOneDriveUser" TabIndex="3" IsEnabled="False"/>
+        <Label Content="OneDrive pw:" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.433,1.846"/>
+        <TextBox HorizontalAlignment="Left" Height="20" Margin="102,83,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="233" x:Name="tbOneDrivePassword" TabIndex="4" InputScope="Password" IsEnabled="False"/>
+
+    </Grid>
+</Window>
