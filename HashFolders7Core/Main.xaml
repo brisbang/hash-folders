@@ -14,8 +14,6 @@
                 <MenuItem Header="Compare folders..." Click="mnuCompareFolders_Click" IsEnabled="False"/>
                 <MenuItem Header="Report..." Click="mnuReportFolders_Click"/>
                 <Separator/>
-                <MenuItem Header="Test..." Click="mnuTest_Click"/>
-                <Separator/>
                 <MenuItem Header="E_xit" Click="mnuExitItem_Click"/>
             </MenuItem>
         </Menu>

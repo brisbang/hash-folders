@@ -57,19 +57,6 @@ namespace HashFolders
             }
         }
 
-        private void mnuTest_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                //HashLib7.FileProperty.Test();
-                MessageBox.Show("Done");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "Test", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private void mnuHashFolders_Click(object sender, RoutedEventArgs e)
         {
             try

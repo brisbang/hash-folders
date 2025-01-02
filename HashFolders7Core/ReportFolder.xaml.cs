@@ -33,9 +33,5 @@ namespace HashFolders
             }
         }
 
-        private void btnHash_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
     }
 }

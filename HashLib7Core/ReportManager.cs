@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms.VisualStyles;
 
 namespace HashLib7
 {
@@ -18,7 +19,6 @@ namespace HashLib7
         private long _numFilesCounted;
         private DateTime _startTime;
         private int _numThreadsRunning;
-        private List<char> _drives;
         private Queue<FileInfo> _files;
         public StateEnum State { get; private set; }
         private static object _mutex = new();
@@ -39,6 +39,7 @@ namespace HashLib7
                     _threads = new();
                     _path = path;
                     UserSettings.RecentlyUsedFolder = path;
+                    UserSettings.ReportThreadCount = numThreads;
                     _startTime = DateTime.Now;
                     _outputFile = String.Format("{0}\\Report-{1}.csv", Config.DataPath, _startTime.ToString("yyyy-MM-dd-HHmmss"));
                     State = StateEnum.Running;
@@ -104,19 +105,15 @@ namespace HashLib7
                     {
                         _files = d.GetFilesByPath(_path);
                         _numFilesCounted = _files.Count;
-                        _drives = d.GetDrives();
-                        LogLine(ReportHeader(_drives));
+                        LogLine(ReportHeader());
                     }
                 }
             }
             try
             {
-                List<FileDrive> drives = new();
-                foreach (char drive in _drives)
-                    drives.Add(new FileDrive() { Letter = drive });
                 while (_files.Count > 0)
                 {
-                    ExtractAndProcessLine(d, drives);
+                    ExtractAndProcessLine(d);
                     switch (this.State)
                     {
                         case StateEnum.Stopped: return; //Weird
@@ -149,7 +146,7 @@ namespace HashLib7
             }
         }
 
-        private FileInfo ExtractAndProcessLine(Database d, List<FileDrive> drives)
+        private FileInfo ExtractAndProcessLine(Database d)
         {
             FileInfo file;
             lock (_mutexList)
@@ -160,7 +157,7 @@ namespace HashLib7
             }
             if (file != null)
             {
-                ReportFile(d, drives, file);
+                ReportFile(d, file);
                 lock (_mutexProcessed)
                 {
                     _numFilesProcessed++;
@@ -170,7 +167,7 @@ namespace HashLib7
             return file;
         }
 
-        private void ReportFile(Database d, List<FileDrive> drives, FileInfo file)
+        private void ReportFile(Database d, FileInfo file)
         {
             ReportRow rr = new()
             {
@@ -178,87 +175,51 @@ namespace HashLib7
                 filename = file.filename,
                 size = file.size
             };
+            FileLocations locations = new(file.filename);
             if (file.size > 0)
             {
                 List<string> matchingFiles = d.GetFilesByHash(file.hash);
-                foreach (FileDrive drive in drives)
-                {
-                    drive.files = new();
-                }
                 foreach (string match in matchingFiles)
-                    ReviewMatchingFiles(drives, file, rr, match);
+                    ReviewMatchingFiles(locations, file, rr, match);
             }
-            LogLine(ReportRowToString(drives, rr));
+            LogLine(ReportRowToString(locations, rr));
         }
 
-        private static void ReviewMatchingFiles(List<FileDrive> drives, FileInfo file, ReportRow rr, string match)
+        private static void ReviewMatchingFiles(FileLocations locations, FileInfo file, ReportRow rr, string match)
         {
             if (match.Length == 0) throw new ArgumentNullException("NULL returned when searching for hash " + file.hash);
-            //Don't report the same file
-            if (match == file.filename) return;
-            foreach (FileDrive drive in drives)
-            {
-                if (match[0] == drive.Letter)
-                {
-                    drive.files.Add(match);
-                    return;
-                }
-            }
+            locations.AddDuplicate(match);
         }
 
-        private string ReportHeader(List<char> drives)
+        private static string ReportHeader()
         {
-            string res = "Filename,Hash,Size,Size on the same drive";
-            foreach (char drive in drives)
-            {
-                res += ",Duplicates on " + drive;
-            }
-            foreach (char drive in drives)
-            {
-                res += ",First duplicate on " + drive;
-            }
-            res += ",Local duplicate 1";
-            res += ",Local duplicate 2";
-            res += ",Local duplicate 3";
-            res += ",Local duplicate 4";
-            res += "\n";
+            string res = "Filename,Hash,Size,Local copies,Local backups,Remote backups,Local copy 1,Local backup 1,Remote backup 1\n";
             return res;
         }
 
-        private string ReportRowToString(List<FileDrive> drives, ReportRow rr)
+        private string ReportRowToString(FileLocations locations, ReportRow rr)
         {
-            long sizeDuplicated = 0;
-            string res = String.Format("{0},{1},{2}", SafeFilename(rr.filename), rr.hash, rr.size.ToString());
-            List<string> otherCopies = null;
-            foreach (FileDrive drive in drives)
-            {
-                if (rr.filename[0] == drive.Letter)
-                {
-                    sizeDuplicated = rr.size * drive.files.Count;
-                    otherCopies = drive.files;
-                    break;
-                }
-            }
-            res += String.Format(",{0}", sizeDuplicated.ToString());
-            foreach (FileDrive drive in drives)
-                res += String.Format(",{0}", drive.files.Count);
-            foreach (FileDrive drive in drives)
-            {
-                if (0 == drive.files.Count)
-                    res += ",";
-                else
-                    res += String.Format(",{0}", SafeFilename(drive.files[0]));
-            }
-            if (otherCopies != null)
-            {
-                for (int i = 0; i < Math.Min(otherCopies.Count, 4); i++)
-                    res += String.Format(",{0}", SafeFilename(otherCopies[i]));
-            }
-            res += '\n';
+            List<string> localCopies = locations.Copies(LocationEnum.LocalCopy);
+            List<string> localBackups = locations.Copies(LocationEnum.LocalBackup);
+            List<string> remoteBackups = locations.Copies(LocationEnum.RemoteBackup);
+            string localCopyFirst = String.Empty;
+            string localBackupFirst = String.Empty;
+            string remoteBackupFirst = String.Empty;
+            if (localCopies.Count > 0) localCopyFirst = SafeFilename(localCopies[0]);
+            if (localBackups.Count > 0) localBackupFirst = SafeFilename(localBackups[0]);
+            if (remoteBackups.Count > 0) remoteBackupFirst = SafeFilename(remoteBackups[0]);
+
+            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n", SafeFilename(rr.filename), rr.hash, rr.size.ToString(), 
+               localCopies.Count.ToString(),
+               localBackups.Count.ToString(),
+               remoteBackups.Count.ToString(),
+               localCopyFirst,
+               localBackupFirst,
+               remoteBackupFirst);
             return res;
         }
 
-        private string SafeFilename(string filename)
+        private static string SafeFilename(string filename)
         {
             return filename.Replace(',', '|');
         }
