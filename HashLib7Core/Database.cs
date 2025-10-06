@@ -9,15 +9,18 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace HashLib7
 {
     internal class Database
     {
         private string _connectionString;
+        private readonly ILogger<Database> _logger;
 
-        internal Database(string connString)
+        internal Database(ILogger<Database> logger, string connString)
         {
+            _logger = logger;
             _connectionString = connString;
         }
 

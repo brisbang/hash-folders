@@ -13,5 +13,9 @@ namespace HashFolders
     /// </summary>
     public partial class App : Application
     {
+        public void InitializeComponent()
+        {
+            
+        }
     }
 }

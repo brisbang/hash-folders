@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.VisualBasic;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HashFolders
 {
@@ -21,6 +22,8 @@ namespace HashFolders
     /// </summary>
     public partial class Main : Window
     {
+        public static IServiceProvider Services { get; private set; }
+
         public Main()
         {
             //InitializeComponent();
@@ -35,20 +38,20 @@ namespace HashFolders
             }
         }
 
+
         private static void SetConfig()
         {
             string dataPath = System.Configuration.ConfigurationManager.AppSettings["dataPath"];
             string database = System.Configuration.ConfigurationManager.AppSettings["database"];
-            string logfile = System.Configuration.ConfigurationManager.AppSettings["logfile"];
             string debug = System.Configuration.ConfigurationManager.AppSettings["log_debug"];
-            Config.SetParameters(dataPath, database, logfile, debug == "true");
+            Config.SetParameters(Program.serviceProvider, dataPath, database, debug == "true");
         }
 
         private void mnuReportFolders_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                ReportFolder r = new ReportFolder();
+                ReportFolder r = new();
                 r.ShowDialog();
             }
             catch (Exception ex)
@@ -61,7 +64,7 @@ namespace HashFolders
         {
             try
             {
-                IndexFolder i = new IndexFolder();
+                IndexFolder i = new();
                 i.ShowDialog();
             }
             catch (Exception ex)

@@ -95,7 +95,7 @@ namespace HashLib7
         private void ExecuteInternal()
         {
             _numThreadsRunning++;
-            Database d = new(Config.DatabaseFile);
+            Database d = Config.GetDatabase();
             PathFormatted p = new(_path);
             if (_files == null)
             {
