@@ -16,9 +16,9 @@ namespace HashLib7
         private static ILogger<Config> _logger;
         public static bool LogDebug { get; private set; }
         internal static Database Database { get; private set; }
-        private static ServiceProvider _provider;
+        private static IServiceProvider _provider;
 
-        public static void SetParameters(ServiceProvider provider, string dataPath, string database, bool logDebug)
+        public static void SetParameters(IServiceProvider provider, string dataPath, string database, bool logDebug)
         {
             _provider = provider;
             _dataPath = dataPath;

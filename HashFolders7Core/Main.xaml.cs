@@ -1,19 +1,6 @@
 ﻿using System;
 using HashLib7;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using Microsoft.VisualBasic;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace HashFolders
 {
@@ -26,7 +13,7 @@ namespace HashFolders
 
         public Main()
         {
-            //InitializeComponent();
+//            InitializeComponent();
             try
             {
                 SetConfig();
@@ -44,7 +31,7 @@ namespace HashFolders
             string dataPath = System.Configuration.ConfigurationManager.AppSettings["dataPath"];
             string database = System.Configuration.ConfigurationManager.AppSettings["database"];
             string debug = System.Configuration.ConfigurationManager.AppSettings["log_debug"];
-            Config.SetParameters(Program.serviceProvider, dataPath, database, debug == "true");
+            Config.SetParameters(App.ServiceProvider, dataPath, database, debug == "true");
         }
 
         private void mnuReportFolders_Click(object sender, RoutedEventArgs e)
