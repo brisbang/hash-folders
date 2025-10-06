@@ -1,0 +1,49 @@
+{
+
+    // Base templates: https://gist.github.com/pakLebah/dab98067e9a388a3a8d2f5c0b44a7d3f#file-tasks-json, https://gist.github.com/stepbester/96e6310e7e94cd7c64b54f9efa38489f
+    // VSCode integration instructions: https://stephan-bester.medium.com/free-pascal-in-visual-studio-code-e1e0a240a430
+    // fpc documentation: https://downloads.freepascal.org/fpc/docs-pdf/user.pdf (Chapter 5: Compiler Configuration)
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Publish",
+            "command": "dotnet",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "process",
+            "args": [
+                "publish",
+            ],
+            "dependsOn": "Build UI",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build UI",
+            "command": "dotnet",
+            "dependsOn": "Build Lib",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/HashFolders7Core/HashFolders.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build Lib",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/HashLib7Core/HashLib7.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+    ]
+}
+    
