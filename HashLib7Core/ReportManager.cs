@@ -178,17 +178,11 @@ namespace HashLib7
             FileLocations locations = new(file.filename);
             if (file.size > 0)
             {
-                List<string> matchingFiles = d.GetFilesByHash(file.hash);
-                foreach (string match in matchingFiles)
-                    ReviewMatchingFiles(locations, file, rr, match);
+                List<PathFormatted> matchingFiles = d.GetFilesByHash(file.hash);
+                foreach (PathFormatted match in matchingFiles)
+                    locations.AddDuplicate(match);
             }
             LogLine(ReportRowToString(locations, rr));
-        }
-
-        private static void ReviewMatchingFiles(FileLocations locations, FileInfo file, ReportRow rr, string match)
-        {
-            if (match.Length == 0) throw new ArgumentNullException("NULL returned when searching for hash " + file.hash);
-            locations.AddDuplicate(match);
         }
 
         private static string ReportHeader()

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -13,76 +14,48 @@ namespace HashLib7
 {
     internal class Database
     {
-//        private OdbcConnection _connection;
         private string _connectionString;
 
-        internal Database(string database)
+        internal Database(string connString)
         {
-            _connectionString = String.Format("Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};Dbq={0}", database);
+            _connectionString = connString;
         }
-
-/*
-   public OdbcConnection GetConnection()
-        {
-            return new OdbcConnection(_connectionString);
-        }
-*/
-/*        public void Open()
-        {
-            if (_connection != null) Close();
-            OdbcConnection conn = new()
-            {
-                ConnectionString = _connectionString
-            };
-            conn.Open();
-            _connection = conn;
-        }
-*/
 
         public int NumFilesInLibrary()
         {
-            return ExecuteScalar("SELECT COUNT(*) FROM [File]");
+            return ExecuteScalar("SELECT COUNT(*) FROM [dbo].[FileDetail]");
         }
 
         private int ExecuteNonQuery(string sql)
         {
-            using (OdbcConnection conn = new OdbcConnection(_connectionString))
-            {
-                //            if (_connection == null) throw new InvalidOperationException("Connection not set");
-                OdbcCommand cmd = new OdbcCommand(sql, conn);
-                conn.Open();
-                int res = cmd.ExecuteNonQuery();
-                conn.Close();
-                return res;
-            }
+            using SqlConnection conn = new(_connectionString);
+            using SqlCommand cmd = new(sql, conn);
+            conn.Open();
+            int res = cmd.ExecuteNonQuery();
+            return res;
         }
 
         private int ExecuteScalar(string sql)
         {
-            //            if (_connection == null) throw new InvalidOperationException("Connection not set");
-            using (OdbcConnection conn = new OdbcConnection(_connectionString))
-            {
-                OdbcCommand cmd = new OdbcCommand(sql, conn);
-                conn.Open();
-                int res = (int) cmd.ExecuteScalar();
-                conn.Close();
-                return res;
-            }
+            using SqlConnection conn = new(_connectionString);
+            using SqlCommand cmd = new(sql, conn);
+            conn.Open();
+            int res = (int)cmd.ExecuteScalar();
+            return res;
         }
 
         internal FileHash ReadHash(string filename)
         {
             PathFormatted f = new(filename);
-            string sql = String.Format("SELECT FileName1 + FileName2, HashFile, FileSize, Ticks, LastModified FROM [File] WHERE FileName1 = '{0}' AND FileName2 = '{1}'", f.part1, f.part2);
+            string sql = string.Format("SELECT Hash FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{0}'", f.path, f.name);
             FileHash res = null;
-            using (OdbcConnection conn = new(_connectionString))
+            using (SqlConnection conn = new(_connectionString))
             {
-                OdbcCommand cmd = new(sql, conn);
+                SqlCommand cmd = new(sql, conn);
                 conn.Open();
-                OdbcDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.Read())
-                    res = new FileHash(reader);
-                reader.Close();
+                    res = new(reader[0] as string);
             }
             return res;
         }
@@ -90,30 +63,29 @@ namespace HashLib7
         internal SortedList<string, short> GetFilesByPathBrief(string path)
         {
             string sql = GetFilesByPathSql(path);
-            SortedList<string, short> res = new();
-            using (OdbcConnection conn = new(_connectionString))
+            SortedList<string, short> res = [];
+            using (SqlConnection conn = new(_connectionString))
             {
-                OdbcCommand cmd = new(sql, conn);
+                SqlCommand cmd = new(sql, conn);
                 conn.Open();
-                OdbcDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
                     res.Add((reader[0] as string).ToUpper(), 0);
                 }
-                reader.Close();
             }
             return res;
         }
 
         internal List<char> GetDrives()
         {
-            string sql = "SELECT DISTINCT LEFT(FileName1, 1) FROM [File] ORDER BY LEFT(FileName1, 1)";
-            List<char> res = new();
-            using (OdbcConnection conn = new(_connectionString))
+            string sql = "SELECT DISTINCT LEFT(Path, 1) FROM [dbo].[FileDetail] ORDER BY LEFT(Path, 1)";
+            List<char> res = [];
+            using (SqlConnection conn = new(_connectionString))
             {
-                OdbcCommand cmd = new(sql, conn);
+                SqlCommand cmd = new(sql, conn);
                 conn.Open();
-                OdbcDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
                     res.Add((reader[0] as string)[0]);
@@ -124,13 +96,10 @@ namespace HashLib7
 
         private static string GetFilesByPathSql(string path)
         {
-            PathFormatted p = new PathFormatted(path);
-            string sql = "SELECT FileName1 + FileName2, HashFile, FileSize FROM [File] ";
-            if (p.part2.Length == 0)
-                sql = String.Format("{0} WHERE (FileName1 LIKE '{1}%')", sql, p.part1);
-            else
-                sql = String.Format("{0} WHERE (FileName1 = '{1}' AND FileName2 LIKE '{2}%')", sql, p.part1, p.part2);
-            sql += " ORDER BY FileName1, FileName2";
+            PathFormatted p = new(path);
+            string sql = "SELECT Name, Hash, Size FROM [dbo].[FileDetail]";
+            sql = string.Format("{0} WHERE (Path = '{1}%')", sql, p.path);
+            sql += " ORDER BY Name";
             return sql;
         }
 
@@ -145,7 +114,7 @@ namespace HashLib7
                 OdbcDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    FileInfo fi = new FileInfo
+                    FileInfo fi = new()
                     {
                         filename = reader[0] as string,
                         hash = reader[1] as string,
@@ -181,7 +150,7 @@ namespace HashLib7
                 }
             }
             numAttempts = 0; pass = false;
-            string sqlInsert = String.Format("INSERT INTO [File] (FileName1, FileName2, HashFile, FileSize, Ticks, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.part1, f.part2, hashfile, filesize, LastModified.Ticks, LastModified.ToString("yyyy-MM-dd hh:mm:ss"));
+            string sqlInsert = String.Format("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.path, f.name, hashfile, filesize, LastModified.Ticks, LastModified.ToString("yyyy-MM-dd hh:mm:ss"));
             while (!pass && numAttempts < maxAttempts)
             {
                 try {
@@ -203,40 +172,24 @@ namespace HashLib7
         //Used where the fingerprint no longer matches
         internal void DeleteFile(PathFormatted f)
         {
-            string sqlDelete = String.Format("DELETE FROM [File] WHERE FileName1 = '{0}' AND FileName2 = '{1}'", f.part1, f.part2);
+            string sqlDelete = String.Format("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
             ExecuteNonQuery(sqlDelete);
         }
 
-        internal List<string> GetFilesByHash(string hash)
+        internal List<PathFormatted> GetFilesByHash(string hash)
         {
-            string sql = String.Format("SELECT FileName1 + FileName2 FROM [File] WHERE HashFile = '{0}' ORDER BY FileName1, FileName2", hash);
-            List<string> res = new();
+            string sql = String.Format("SELECT Path, Name FROM [FileDetail] WHERE Hash = '{0}' ORDER BY Path, Name", hash);
+            List<PathFormatted> res = [];
             using (OdbcConnection conn = new(_connectionString))
             {
                 OdbcCommand cmd = new(sql, conn);
                 conn.Open();
                 OdbcDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
-                    res.Add(reader[0] as string);
+                    res.Add(new PathFormatted(reader[0] as string, reader[1] as string));
                 reader.Close();
             }
             return res;
         }
-
-/*        public void Close()
-        {
-            try
-            {
-                _connection.Close();
-            }
-            catch { }
-            _connection = null;
-        }
-*/
-
-        //Compression
-        //  Scan all files to see if the fingerprint still matches
-        //  Delete if it doesn't
-
     }
 }

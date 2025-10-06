@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,31 +12,34 @@ namespace HashLib7
     /// </summary>
     internal class PathFormatted
     {
-        /// <summary>
-        /// The database-ready form of the first 255 chars
-        /// </summary>
-        public readonly string part1;
-        /// <summary>
-        /// The database-ready form of the second 255 chars (if required)
-        /// </summary>
-        public readonly string part2;
+        public readonly string path;
+        public readonly string name;
+        public readonly string fullName;
         public PathFormatted(string filename)
         {
-            if (filename.Length > 510)
-                throw new Exception(String.Format("File path is too long: {0}", filename));
-            if (filename.Length > 255)
-            {
-                part1 = filename.Substring(0, 255);
-                part2 = filename.Substring(255, filename.Length - 255);
-                part2 = part2.Replace("'", "''");
-            }
-            else
-            {
-                part1 = filename;
-                part2 = "";
-            }
-            part1 = part1.Replace("'", "''");
+            int slashPos = filename.LastIndexOf('\\');
+            if (slashPos == 0)
+                throw new ArgumentException(String.Format("Path lacks a drive letter: {0}", filename));
+            if (slashPos < 0)
+                throw new ArgumentException(String.Format("Path lacks a backslash: {0}", filename));
+            path = filename[..(slashPos - 1)];
+            name = filename[(slashPos + 1)..];
+            if (path.Length > 512)
+                throw new ArgumentException(String.Format("File path is too long: {0}", filename));
+            if (name.Length > 255)
+                throw new ArgumentException(String.Format("File name is too long: {0}", filename));
+            fullName = filename;
         }
 
+        public PathFormatted(string path, string name)
+        {
+            if (path.Length > 512)
+                throw new ArgumentException(String.Format("File path is too long: {0}", path));
+            if (name.Length > 255)
+                throw new ArgumentException(String.Format("File name is too long: {0}", name));
+            this.path = path;
+            this.name = name;
+            fullName = String.Format("{0}\\{1}", path, name);
+        }
     }
 }

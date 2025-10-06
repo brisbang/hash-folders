@@ -63,14 +63,14 @@ namespace HashLib7
             Abort();
             try
             {
-                _folders = new List<string>();
+                _folders = [];
                 _folderIndex = 0; _fileIndex = 0; _numFilesProcessed = 0; _numFoldersProcessed = 0;
-                _files = new List<string>();
-                _threads = new List<Worker>();
+                _files = [];
+                _threads = [];
                 _numThreads = numThreads;
                 _previouslyRecordedFiles = Config.Database.GetFilesByPathBrief(Folder);
 
-                Worker first = new Worker(this);
+                Worker first = new(this);
                 _threads.Add(first);
                 first.ScanFolder(Folder);
                 Config.LogInfo("State: Running");
@@ -90,7 +90,7 @@ namespace HashLib7
         {
             if (State == StateEnum.Running)
             {
-                Worker w = new Worker(this);
+                Worker w = new(this);
                 _threads.Add(w);
                 w.ExecuteAsync();
             }

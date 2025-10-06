@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
 namespace HashLib7
 {
     public class Credentials
@@ -19,3 +20,4 @@ namespace HashLib7
         internal string OneDrivePassword { get { return _oneDrivePassword; } }
     }
 }
+*/

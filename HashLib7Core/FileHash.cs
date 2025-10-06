@@ -4,6 +4,7 @@ using System.Data.Odbc;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace HashLib7
 {
@@ -30,14 +31,6 @@ namespace HashLib7
             FilePath = file;
             LastModified = Io.GetLastModified(file);
             Length = Io.GetLength(file);
-        }
-
-        public FileHash(OdbcDataReader reader)
-        {
-            FilePath = reader[0] as string;
-            _hash = reader[1] as string;
-            Length = long.Parse(reader[2] as string);
-            LastModified = new DateTime(long.Parse(reader[3] as string));
         }
 
         /// <summary>

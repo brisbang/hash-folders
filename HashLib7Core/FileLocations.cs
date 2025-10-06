@@ -41,15 +41,15 @@ namespace HashLib7
             get {return _sourceFilename;}
         }
 
-        public void AddDuplicate(string filename)
+        public void AddDuplicate(PathFormatted filename)
         {
             List<string> list = ListForTarget(filename);
-            list?.Add(filename);
+            list?.Add(filename.fullName);
         }
 
-        private List<string> ListForTarget(string targetFilename)
+        private List<string> ListForTarget(PathFormatted targetFilename)
         {
-            return Copies(Compare(_sourceFilename, _sourceDrive, targetFilename));
+            return Copies(Compare(_sourceFilename, _sourceDrive, targetFilename.fullName));
         }
 
         private static LocationEnum Compare(string sourceFilename, char sourceDrive, string targetFilename)

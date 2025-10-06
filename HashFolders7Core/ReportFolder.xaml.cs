@@ -14,8 +14,8 @@ namespace HashFolders
         public ReportFolder()
         {
             InitializeComponent();
-            tbFolder.Text = HashLib7.UserSettings.RecentlyUsedFolder;
-            tbNumThreads.Text = HashLib7.UserSettings.ReportThreadCount.ToString();
+            tbFolder.Text = UserSettings.RecentlyUsedFolder;
+            tbNumThreads.Text = UserSettings.ReportThreadCount.ToString();
         }
 
         private void btnReport_Click(object sender, RoutedEventArgs e)
