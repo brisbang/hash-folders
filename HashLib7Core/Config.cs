@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,18 +12,17 @@ namespace HashLib7
     public class Config
     {
         private static string _dataPath;
-        private static string _databaseFile;
+        private static string _connStr;
         private static object _logMutex;
         private static ILogger<Config> _logger;
         public static bool LogDebug { get; private set; }
-        internal static Database Database { get; private set; }
         private static IServiceProvider _provider;
 
-        public static void SetParameters(IServiceProvider provider, string dataPath, string database, bool logDebug)
+        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, bool logDebug)
         {
             _provider = provider;
             _dataPath = dataPath;
-            _databaseFile = database;
+            _connStr = connStr;
             _logMutex = new object();
             _logger = provider.GetRequiredService<ILogger<Config>>();
             LogDebug = logDebug;
@@ -30,11 +30,10 @@ namespace HashLib7
 
         internal static Database GetDatabase()
         {
-            return new Database(_provider.GetRequiredService<ILogger<Database>>(), DatabaseFile);
+            return new Database(_provider.GetRequiredService<ILogger<Database>>(), _connStr);
         }
 
         internal static string DataPath { get { return _dataPath; } }
-        internal static string DatabaseFile { get { return String.Format("{0}\\{1}", DataPath, _databaseFile); } }
 
         public static void LogInfo(string text)
         {
@@ -42,10 +41,18 @@ namespace HashLib7
             _logger.LogInformation(output);
         }
 
+        public static void LogDebugging(string text)
+        {
+            if (LogDebug)
+            {
+                string output = String.Format("[{0}]:{1}\r\n", System.Threading.Thread.CurrentThread.ManagedThreadId, text);
+                _logger.LogDebug(output);
+            }
+        }
+
         internal static void WriteException(string file, Exception ex)
         {
-            if (file == null)
-                file = "<No information>";
+            file ??= "<No information>";
             string output = String.Format("{0}\t{1}\r\n", file, ex.ToString());
             _logger.LogError(output);
         }

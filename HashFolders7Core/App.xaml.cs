@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace HashFolders
@@ -30,6 +31,14 @@ namespace HashFolders
 
             // Register your services and windows
             serviceCollection.AddTransient<Main>();
+            var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(e.Args)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddDebug();
+                });
+
             //serviceCollection.AddTransient<IMyService, MyService>();
 
             ServiceProvider = serviceCollection.BuildServiceProvider();

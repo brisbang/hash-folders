@@ -21,7 +21,7 @@ namespace HashLib7
         public bool HasHash {  get { return (_hash != null) && (_hash != NoHash); } }
         public DateTime LastModified;
         public long Length;
-        public string Key { get { return FilePath.ToUpper(); } }
+        public string Key { get { return FilePath; } }
 
         private FileHash()
         { }
@@ -30,7 +30,16 @@ namespace HashLib7
         {
             FilePath = file;
             LastModified = Io.GetLastModified(file);
+            LastModified = new DateTime(LastModified.Year, LastModified.Month, LastModified.Day, LastModified.Hour, LastModified.Minute, LastModified.Second); //Remove milliseconds for database comparison
             Length = Io.GetLength(file);
+        }
+
+        public FileHash(string file, DateTime lastModified, long length, string hash)
+        {
+            FilePath = file;
+            LastModified = lastModified;
+            Length = length;
+            _hash = hash;
         }
 
         /// <summary>

@@ -31,168 +31,208 @@ namespace HashLib7
 
         private int ExecuteNonQuery(string sql)
         {
-            using SqlConnection conn = new(_connectionString);
-            using SqlCommand cmd = new(sql, conn);
-            conn.Open();
-            int res = cmd.ExecuteNonQuery();
-            return res;
+            try
+            {
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
+                conn.Open();
+                int res = cmd.ExecuteNonQuery();
+                return res;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
         }
 
         private int ExecuteScalar(string sql)
         {
-            using SqlConnection conn = new(_connectionString);
-            using SqlCommand cmd = new(sql, conn);
-            conn.Open();
-            int res = (int)cmd.ExecuteScalar();
-            return res;
+            try
+            {
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
+                conn.Open();
+                return (int)cmd.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
+        }
+
+        private static string SafeSql(string formatString, params string[] args)
+        {
+            for (int i = 0; i < args.Length; i++)
+                args[i] = args[i].Replace("'", "''");
+            return String.Format(formatString, args);
         }
 
         internal FileHash ReadHash(string filename)
         {
-            PathFormatted f = new(filename);
-            string sql = string.Format("SELECT Hash FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{0}'", f.path, f.name);
-            FileHash res = null;
-            using (SqlConnection conn = new(_connectionString))
+            try
             {
-                SqlCommand cmd = new(sql, conn);
+                PathFormatted f = new(filename);
+                string sql = SafeSql("SELECT LastModified, Size, Hash FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
                 conn.Open();
                 using SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.Read())
-                    res = new(reader[0] as string);
+                    return new(filename, DateTime.Parse(reader[0].ToString()), (long)reader[1], (string)reader[2]);
+                return null;
             }
-            return res;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
         }
 
         internal SortedList<string, short> GetFilesByPathBrief(string path)
         {
-            string sql = GetFilesByPathSql(path);
-            SortedList<string, short> res = [];
-            using (SqlConnection conn = new(_connectionString))
+            try
             {
-                SqlCommand cmd = new(sql, conn);
+                string sql = GetFilesByPathSql(path);
+                SortedList<string, short> res = [];
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
                 conn.Open();
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
-                {
-                    res.Add((reader[0] as string).ToUpper(), 0);
-                }
+                    res.Add(String.Format("{0}\\{1}", reader[0] as string, reader[1] as string), 0);
+                return res;
             }
-            return res;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
         }
-
+/*
         internal List<char> GetDrives()
         {
-            string sql = "SELECT DISTINCT LEFT(Path, 1) FROM [dbo].[FileDetail] ORDER BY LEFT(Path, 1)";
-            List<char> res = [];
-            using (SqlConnection conn = new(_connectionString))
+            try
             {
-                SqlCommand cmd = new(sql, conn);
-                conn.Open();
-                using SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                string sql = "SELECT DISTINCT LEFT(Path, 1) FROM [dbo].[FileDetail] ORDER BY LEFT(Path, 1)";
+                List<char> res = [];
+                using SqlConnection conn = new(_connectionString);
+                using (SqlCommand cmd = new(SafeSql(sql), conn))
                 {
-                    res.Add((reader[0] as string)[0]);
+                    conn.Open();
+                    using SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        res.Add((reader[0] as string)[0]);
+                    }
                 }
+                return res;
             }
-            return res;
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
 
+        }
+*/
         private static string GetFilesByPathSql(string path)
         {
-            PathFormatted p = new(path);
-            string sql = "SELECT Name, Hash, Size FROM [dbo].[FileDetail]";
-            sql = string.Format("{0} WHERE (Path = '{1}%')", sql, p.path);
-            sql += " ORDER BY Name";
-            return sql;
+            return SafeSql("SELECT Path, Name, Hash, Size FROM [dbo].[FileDetail] WHERE (Path LIKE '{0}%') ORDER BY Name", path);
         }
 
         internal Queue<FileInfo> GetFilesByPath(string path)
         {
-            string sql = GetFilesByPathSql(path);
-            Queue<FileInfo> res = new();
-            using (OdbcConnection conn = new(_connectionString))
+            try
             {
-                OdbcCommand cmd = new(sql, conn);
+                string sql = GetFilesByPathSql(path);
+                Queue<FileInfo> res = new();
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
                 conn.Open();
-                OdbcDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
                     FileInfo fi = new()
                     {
-                        filename = reader[0] as string,
-                        hash = reader[1] as string,
-                        size = long.Parse(reader[2] as string)
+                        filePath = String.Format("{0}\\{1}", reader[0] as string, reader[1] as string),
+                        hash = reader[2] as string,
+                        size = long.Parse(reader[3] as string)
                     };
                     res.Enqueue(fi);
                 }
-                reader.Close();
+                return res;
             }
-            return res;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
         }
 
 
 
-        private void WriteHash(string filename, string hashfile, long filesize, DateTime LastModified)
+        private void WriteHash(string filename, string hashfile, long filesize, DateTime LastModified, bool newRecord)
         {
-            bool pass = false;
-            short numAttempts = 0;
-            const short maxAttempts = 5;
-            const short timeout = 500;
             PathFormatted f = new(filename);
             //Won't transact because the worst that can happen is that the previous record is lost. It was always incorrect so would require a re-run anyway.
-            numAttempts = 0; pass = false;
-            while (!pass && numAttempts < maxAttempts)
+            if (newRecord)
+            //Technically for multiuser then you would place this all into a transaction, including the check for existence.
+            //However this path (having the caller advise) produces less data growth
+            //if (FileExists(f))
             {
-                try {
-                    DeleteFile(f);
-                    pass = true;
-                }
-                catch {
-                    if (++numAttempts < maxAttempts)
-                        System.Threading.Thread.Sleep(Convert.ToInt32(System.Random.Shared.NextDouble() * timeout));
-                }
+                Config.LogInfo("Creating record for " + filename);
+                string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                ExecuteNonQuery(sqlInsert);
             }
-            numAttempts = 0; pass = false;
-            string sqlInsert = String.Format("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.path, f.name, hashfile, filesize, LastModified.Ticks, LastModified.ToString("yyyy-MM-dd hh:mm:ss"));
-            while (!pass && numAttempts < maxAttempts)
+            else
             {
-                try {
-                    ExecuteNonQuery(sqlInsert);
-                    pass = true;
-                }
-                catch {
-                    if (++numAttempts < maxAttempts)
-                        System.Threading.Thread.Sleep(Convert.ToInt32(System.Random.Shared.NextDouble() * timeout));
-                }
+                Config.LogInfo("Updating record for " + filename);
+                string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}' WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                ExecuteNonQuery(sqlUpdate);
             }
         }
 
-        internal void WriteHash(FileHash hash)
+        internal void WriteHash(FileHash hash, bool newRecord)
         {
-            WriteHash(hash.FilePath, hash.Hash, hash.Length, hash.LastModified);
+            WriteHash(hash.FilePath, hash.Hash, hash.Length, hash.LastModified, newRecord);
         }
-
+/*
+        //Used where the fingerprint no longer matches
+        internal bool FileExists(PathFormatted f)
+        {
+            string sqlDelete = SafeSql("SELECT COUNT(*) FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+            return 1 == ExecuteScalar(sqlDelete);
+        }
+*/
         //Used where the fingerprint no longer matches
         internal void DeleteFile(PathFormatted f)
         {
-            string sqlDelete = String.Format("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+            Config.LogInfo("Deleting record for " + f.fullName + " as it is no longer found");
+            string sqlDelete = SafeSql("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
             ExecuteNonQuery(sqlDelete);
         }
 
         internal List<PathFormatted> GetFilesByHash(string hash)
         {
-            string sql = String.Format("SELECT Path, Name FROM [FileDetail] WHERE Hash = '{0}' ORDER BY Path, Name", hash);
-            List<PathFormatted> res = [];
-            using (OdbcConnection conn = new(_connectionString))
+            try
             {
-                OdbcCommand cmd = new(sql, conn);
+                string sql = SafeSql("SELECT Path, Name FROM [FileDetail] WHERE Hash = '{0}' ORDER BY Path, Name", hash);
+                List<PathFormatted> res = [];
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmd = new(sql, conn);
                 conn.Open();
-                OdbcDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                     res.Add(new PathFormatted(reader[0] as string, reader[1] as string));
-                reader.Close();
+                return res;
             }
-            return res;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
         }
     }
 }

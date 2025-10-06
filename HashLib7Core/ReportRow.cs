@@ -8,7 +8,7 @@ namespace HashLib7
 {
     internal class ReportRow
     {
-        public string filename;
+        public string filePath;
         public string hash;
         public long size;
     }

@@ -7,6 +7,22 @@ using System.Threading.Tasks;
 
 namespace HashLib7
 {
+    internal enum RecordMatch
+    {
+        /// <summary>
+        /// A record was found but the details do not match
+        /// </summary>
+        NoMatch,
+        /// <summary>
+        /// The details match the record on file
+        /// </summary>
+        Match,
+        /// <summary>
+        /// No record was found
+        /// </summary>
+        NoRecord
+    }
+
     /// <summary>
     /// Pulls a task from the ThreadManager's backlog:
     /// * Scans a folder and expands the backlog of files (and further folders); or
@@ -36,30 +52,27 @@ namespace HashLib7
             try
             {
                 const int sleepMs = 100;
-                string folder;
-                string file;
                 Parent.ThreadIsStarted();
                 _aborted = false;
-                Config.LogInfo("Starting");
-                ThreadLoop(sleepMs, out folder, out file);
-                Config.LogInfo("Ending");
+                Config.LogDebugging("Worker starting");
+                ThreadLoop(sleepMs, out string folder, out string file);
+                Config.LogDebugging("Worker ending");
             }
             catch (System.Threading.ThreadAbortException) { }
             catch (Exception ex)
             {
                 Config.WriteException(null, ex);
-                Config.LogInfo(String.Format("Exception: {0}", ex.ToString()));
             }
             finally
             {
-                Config.LogInfo("Finalising");
+                Config.LogDebugging("Finalising");
                 Parent.ThreadIsFinished();
             }
         }
 
         private void ThreadLoop(int sleepMs, out string folder, out string file)
         {
-            Config.LogInfo("Starting ThreadLoop");
+            Config.LogDebugging("Starting ThreadLoop");
             while (Parent.GetNextTask(out folder, out file) && !_aborted)
             {
                 int attemptNo = 0;
@@ -70,7 +83,7 @@ namespace HashLib7
                     if (!success && !_aborted)
                     {
                         attemptNo++;
-                        Config.LogInfo(String.Format("Pausing at attempt: {0}", attemptNo));
+                        Config.LogDebugging(String.Format("Pausing at attempt: {0}", attemptNo));
                         //In a fatal error - let's try again after a brief pause.
                         System.Threading.Thread.Sleep(500);
                     }
@@ -89,7 +102,6 @@ namespace HashLib7
             catch (System.Threading.ThreadAbortException) { throw; }
             catch (Exception ex)
             {
-                Config.LogInfo(String.Format("Task exception: {0}", ex.ToString()));
                 if (attemptNo == maxAttempts)
                 {
                     if (folder != null)
@@ -116,7 +128,7 @@ namespace HashLib7
         public void ScanFolder(string folder)
         {
             if (Config.LogDebug)
-                Config.LogInfo(String.Format("Scanning: {0}", folder));
+                Config.LogDebugging(String.Format("Scanning: {0}", folder));
             string[] files = Io.GetFiles(folder);
             string[] folders = Io.GetFolders(folder);
             Parent.AddFiles(folders, files);
@@ -124,14 +136,13 @@ namespace HashLib7
 
         private void HashFile(string file)
         {
-            FileHash fh = new FileHash(file);
-            if (RequiresUpdatedHash(fh))
-            {
-                if (Config.LogDebug)
-                    Config.LogInfo(String.Format("Hashing: {0}", file));
-                fh.Compute(_hashAlgorithm);
-                Config.Database.WriteHash(fh);
-            }
+            FileHash fh = new(file);
+            RecordMatch match = RequiresUpdatedHash(fh);
+            if (match == RecordMatch.Match)
+                return;
+            Config.LogDebugging(String.Format("Hashing: {0}", file));
+            fh.Compute(_hashAlgorithm);
+            Config.GetDatabase().WriteHash(fh, match == RecordMatch.NoRecord);
         }
 
         /// <summary>
@@ -142,16 +153,16 @@ namespace HashLib7
         /// </summary>
         /// <param name="fh"></param>
         /// <returns></returns>
-        private bool RequiresUpdatedHash(FileHash fh)
+        private static RecordMatch RequiresUpdatedHash(FileHash fh)
         {
-            FileHash recorded = Config.Database.ReadHash(fh.FilePath);
+            FileHash recorded = Config.GetDatabase().ReadHash(fh.FilePath);
             if (recorded == null)
-                return true;
+                return RecordMatch.NoRecord;
             if (fh.LastModified != recorded.LastModified)
-                return true;
+                return RecordMatch.NoMatch;
             if (fh.Length != recorded.Length)
-                return true;
-            return false;
+                return RecordMatch.NoMatch;
+            return RecordMatch.Match;
         }
 
         public void Abort()

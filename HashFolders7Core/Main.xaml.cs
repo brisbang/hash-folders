@@ -13,7 +13,7 @@ namespace HashFolders
 
         public Main()
         {
-//            InitializeComponent();
+            InitializeComponent();
             try
             {
                 SetConfig();
@@ -29,9 +29,9 @@ namespace HashFolders
         private static void SetConfig()
         {
             string dataPath = System.Configuration.ConfigurationManager.AppSettings["dataPath"];
-            string database = System.Configuration.ConfigurationManager.AppSettings["database"];
+            string connStr = System.Configuration.ConfigurationManager.AppSettings["connectionString"];
             string debug = System.Configuration.ConfigurationManager.AppSettings["log_debug"];
-            Config.SetParameters(App.ServiceProvider, dataPath, database, debug == "true");
+            Config.SetParameters(App.ServiceProvider, dataPath, connStr, debug == "true");
         }
 
         private void mnuReportFolders_Click(object sender, RoutedEventArgs e)

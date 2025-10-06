@@ -68,12 +68,12 @@ namespace HashLib7
                 _files = [];
                 _threads = [];
                 _numThreads = numThreads;
-                _previouslyRecordedFiles = Config.Database.GetFilesByPathBrief(Folder);
+                _previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(Folder);
 
                 Worker first = new(this);
                 _threads.Add(first);
                 first.ScanFolder(Folder);
-                Config.LogInfo("State: Running");
+                Config.LogDebugging("State: Running");
                 State = StateEnum.Running;
                 first.ExecuteAsync();
                 for (int i = 1; i < _numThreads; i++)
@@ -81,7 +81,7 @@ namespace HashLib7
             }
             catch (Exception ex)
             {
-                Config.LogInfo(ex.Message);
+                Config.WriteException(null, ex);
                 throw;
             }
         }
@@ -100,7 +100,7 @@ namespace HashLib7
         {
             if (State == StateEnum.Running)
             {
-                Config.LogInfo("State: Suspended");
+                Config.LogDebugging("State: Suspended");
                 State = StateEnum.Suspended;
             }
         }
@@ -109,7 +109,7 @@ namespace HashLib7
         {
             if (State == StateEnum.Suspended)
             {
-                Config.LogInfo("State: Running");
+                Config.LogDebugging("State: Running");
                 State = StateEnum.Running;
             }
         }
@@ -180,11 +180,18 @@ namespace HashLib7
             if (State == StateEnum.Running && (_numThreadsRunning == 0))
             {
                 while (_previouslyRecordedFiles.Count > 0)
-                { 
-                    Config.Database.DeleteFile(new PathFormatted(_previouslyRecordedFiles.Keys[0]));
+                {
+                    try
+                    {
+                        Config.GetDatabase().DeleteFile(new PathFormatted(Folder, _previouslyRecordedFiles.Keys[0]));
+                    }
+                    catch (Exception ex)
+                    {
+                        Config.WriteException(_previouslyRecordedFiles.Keys[0], ex);
+                    }
                     _previouslyRecordedFiles.RemoveAt(0);
                 }
-                Config.LogInfo("State: Stopped");
+                Config.LogDebugging("State: Stopped");
                 State = StateEnum.Stopped;
             }
         }
@@ -196,7 +203,7 @@ namespace HashLib7
                 _files.AddRange(files);
                 //Remove any files which have been found, even if we end up with an exception processing them.
                 foreach (string f in files)
-                    _previouslyRecordedFiles.Remove(f.ToUpper());
+                    _previouslyRecordedFiles.Remove(f);
                 _folders.AddRange(folders);
             }
         }
@@ -205,7 +212,7 @@ namespace HashLib7
         {
             if (State == StateEnum.Stopped)
                 return;
-            Config.LogInfo("State: Aborting");
+            Config.LogDebugging("State: Aborting");
             State = StateEnum.Aborting;
             for (int i = 0; i < _numThreads; i++)
                 _threads[i].Abort();
@@ -217,7 +224,7 @@ namespace HashLib7
                 }
                 catch { }
             }
-            Config.LogInfo("State: Stopped");
+            Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;
         }
 

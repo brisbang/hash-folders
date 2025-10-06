@@ -172,10 +172,10 @@ namespace HashLib7
             ReportRow rr = new()
             {
                 hash = file.hash,
-                filename = file.filename,
+                filePath = file.filePath,
                 size = file.size
             };
-            FileLocations locations = new(file.filename);
+            FileLocations locations = new(file.filePath);
             if (file.size > 0)
             {
                 List<PathFormatted> matchingFiles = d.GetFilesByHash(file.hash);
@@ -203,7 +203,7 @@ namespace HashLib7
             if (localBackups.Count > 0) localBackupFirst = SafeFilename(localBackups[0]);
             if (remoteBackups.Count > 0) remoteBackupFirst = SafeFilename(remoteBackups[0]);
 
-            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n", SafeFilename(rr.filename), rr.hash, rr.size.ToString(), 
+            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n", SafeFilename(rr.filePath), rr.hash, rr.size.ToString(), 
                localCopies.Count.ToString(),
                localBackups.Count.ToString(),
                remoteBackups.Count.ToString(),
