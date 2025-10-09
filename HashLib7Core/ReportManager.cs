@@ -138,11 +138,9 @@ namespace HashLib7
         {
             lock (_mutexFile)
             {
-                using (System.IO.FileStream outputFileStream = System.IO.File.Open(_outputFile, System.IO.FileMode.Append))
-                {
-                    byte[] outputBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(line);
-                    outputFileStream.Write(outputBytes, 0, outputBytes.Length);
-                }
+                using System.IO.FileStream outputFileStream = System.IO.File.Open(_outputFile, System.IO.FileMode.Append);
+                byte[] outputBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(line);
+                outputFileStream.Write(outputBytes, 0, outputBytes.Length);
             }
         }
 

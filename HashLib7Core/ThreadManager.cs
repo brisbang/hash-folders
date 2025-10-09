@@ -26,7 +26,7 @@ namespace HashLib7
         public StateEnum State { get; private set; }
         //All previously known files under the folder. After processing is complete, any files in this list were not found and so can be removed from the database.
         //The short is not needed and so left 0 for performance reasons
-        private SortedList<string, short> _previouslyRecordedFiles;
+        private SortedList<string, string> _previouslyRecordedFiles;
 
         //GetStatistics can be out slightly due to work in progress.
         //If a thread is processing the last file then that information is not shown because the work queue is empty but NumThreadsRunning is not yet zero.
@@ -179,15 +179,16 @@ namespace HashLib7
         {
             if (State == StateEnum.Running && (_numThreadsRunning == 0))
             {
-                while (_previouslyRecordedFiles.Count > 0)
+                while (_previouslyRecordedFiles.Keys.Count > 0)
                 {
+                    string f = _previouslyRecordedFiles.Values[0];
                     try
                     {
-                        Config.GetDatabase().DeleteFile(new PathFormatted(Folder, _previouslyRecordedFiles.Keys[0]));
+                        Config.GetDatabase().DeleteFile(new PathFormatted(f));
                     }
                     catch (Exception ex)
                     {
-                        Config.WriteException(_previouslyRecordedFiles.Keys[0], ex);
+                        Config.WriteException(f, ex);
                     }
                     _previouslyRecordedFiles.RemoveAt(0);
                 }
@@ -202,8 +203,10 @@ namespace HashLib7
             {
                 _files.AddRange(files);
                 //Remove any files which have been found, even if we end up with an exception processing them.
+                //Unicode filenames have issues here, for example: d:\misc\Tiffany\AMEB music\7th grade\Recordings\new\Telemann Fantasy No.6 in D Minor - Jasmine Choi 최나경.mp3
+                //They aren't matched when extracting from the database.
                 foreach (string f in files)
-                    _previouslyRecordedFiles.Remove(f);
+                    _previouslyRecordedFiles.Remove(f.ToUpper());
                 _folders.AddRange(folders);
             }
         }

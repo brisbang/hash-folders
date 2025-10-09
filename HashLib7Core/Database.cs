@@ -90,18 +90,21 @@ namespace HashLib7
             }
         }
 
-        internal SortedList<string, short> GetFilesByPathBrief(string path)
+        internal SortedList<string, string> GetFilesByPathBrief(string path)
         {
             try
             {
                 string sql = GetFilesByPathSql(path);
-                SortedList<string, short> res = [];
+                SortedList<string, string> res = [];
                 using SqlConnection conn = new(_connectionString);
                 using SqlCommand cmd = new(sql, conn);
                 conn.Open();
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
-                    res.Add(String.Format("{0}\\{1}", reader[0] as string, reader[1] as string), 0);
+                {
+                    string value = String.Format("{0}\\{1}", reader[0] as string, reader[1] as string);
+                    res.Add(value.ToUpper(), value);
+                }
                 return res;
             }
             catch (Exception ex)
@@ -158,7 +161,7 @@ namespace HashLib7
                     {
                         filePath = String.Format("{0}\\{1}", reader[0] as string, reader[1] as string),
                         hash = reader[2] as string,
-                        size = long.Parse(reader[3] as string)
+                        size = (long) reader[3]
                     };
                     res.Enqueue(fi);
                 }
