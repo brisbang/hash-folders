@@ -47,6 +47,19 @@ namespace HashFolders
             }
         }
 
+        private void mnuViewFolders_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                FolderExplorer f = new();
+                f.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "View folders", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void mnuHashFolders_Click(object sender, RoutedEventArgs e)
         {
             try
