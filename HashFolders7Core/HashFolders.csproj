@@ -11,6 +11,9 @@
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\folder.png" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\HashLib7Core\HashLib7.csproj" />
   </ItemGroup>
 </Project>

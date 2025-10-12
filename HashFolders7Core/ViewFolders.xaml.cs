@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,43 +8,46 @@ using System.Windows.Media.Imaging;
 
 namespace HashFolders
 {
-    public partial class FolderExplorer : Window
+    public partial class ViewFolders : Window
     {
-        public FolderExplorer()
+        public ViewFolders()
         {
             InitializeComponent();
-            LoadFolderTree("C:\\");
+            DriveSelector.SelectedIndex = 0; // Default to C:\
+            FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
         }
 
-        private void LoadFolderTree(string rootPath)
+        private void DriveSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DriveSelector.SelectedItem is ComboBoxItem selected &&
+                selected.Content is string drive)
+            {
+                LoadRootFolder(drive);
+            }
+        }
+
+        private void LoadRootFolder(string rootPath)
         {
             var root = new FolderItem { Path = rootPath };
-            LoadSubFolders(root);
             FolderTree.ItemsSource = new List<FolderItem> { root };
         }
 
-        private void LoadSubFolders(FolderItem parent)
+        private void FolderTree_Expanded(object sender, RoutedEventArgs e)
         {
-            try
+            if (e.OriginalSource is TreeViewItem item && item.DataContext is FolderItem folder)
             {
-                foreach (var dir in Directory.GetDirectories(parent.Path))
-                {
-                    var sub = new FolderItem { Path = dir };
-                    parent.SubFolders.Add(sub);
-                }
+                folder.LoadSubFolders();
             }
-            catch { /* Ignore access errors */ }
         }
 
         private void FolderTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            if (FolderTree.SelectedItem is TreeViewItem item)
+            if (FolderTree.SelectedItem is FolderItem folder)
             {
-                string path = item.Tag.ToString();
                 FileList.Items.Clear();
                 try
                 {
-                    foreach (var file in Directory.GetFiles(path))
+                    foreach (var file in Directory.GetFiles(folder.Path))
                     {
                         FileList.Items.Add(file);
                     }

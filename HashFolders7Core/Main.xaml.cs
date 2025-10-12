@@ -51,7 +51,7 @@ namespace HashFolders
         {
             try
             {
-                FolderExplorer f = new();
+                ViewFolders f = new();
                 f.ShowDialog();
             }
             catch (Exception ex)
