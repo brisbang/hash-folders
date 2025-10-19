@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace HashLib7
 {
@@ -31,7 +26,7 @@ namespace HashLib7
     class Worker
     {
         private System.Threading.Thread _thread = null;
-        private ThreadManager Parent;
+        private readonly ThreadManager Parent;
         private HashAlgorithm _hashAlgorithm;
         private bool _aborted;
 

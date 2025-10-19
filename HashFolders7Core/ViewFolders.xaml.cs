@@ -18,36 +18,13 @@ namespace HashFolders
         public ViewFolders()
         {
             InitializeComponent();
-            SetDefaultDrive();
+
+
+            var rootFolders = new List<FolderItem>();
+            foreach (string drive in Config.Drives)
+                rootFolders.Add(new FolderItem() { Path = drive + ":\\" });
+            FolderTree.ItemsSource = rootFolders;
             FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
-        }
-
-        private void SetDefaultDrive()
-        {
-            // Set default drive to E:\
-            foreach (ComboBoxItem item in DriveSelector.Items)
-            {
-                if (item.Content?.ToString()[0] == Config.DefaultDrive[0])
-                {
-                    DriveSelector.SelectedItem = item;
-                    return;
-                }
-            }
-        }
-
-        private void DriveSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (DriveSelector.SelectedItem is ComboBoxItem selected &&
-                selected.Content is string drive)
-            {
-                LoadRootFolder(drive);
-            }
-        }
-
-        private void LoadRootFolder(string rootPath)
-        {
-            var root = new FolderItem { Path = rootPath };
-            FolderTree.ItemsSource = new List<FolderItem> { root };
         }
 
         private void FolderTree_Expanded(object sender, RoutedEventArgs e)

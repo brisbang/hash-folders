@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -13,18 +8,18 @@ namespace HashLib7
     {
         private static string _dataPath;
         private static string _connStr;
-        public static string DefaultDrive { get; private set; }
+        public static string[] Drives { get; private set; }
         private static ILogger<Config> _logger;
         public static bool LogDebug { get; private set; }
         private static IServiceProvider _provider;
 
-        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, string defaultDrive, bool logDebug)
+        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, string[] drives, bool logDebug)
         {
             _provider = provider;
             _dataPath = dataPath;
             _connStr = connStr;
             _logger = provider.GetRequiredService<ILogger<Config>>();
-            DefaultDrive = defaultDrive;
+            Drives = drives;
             LogDebug = logDebug;
         }
 

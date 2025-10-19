@@ -6,8 +6,16 @@ namespace HashFolders
     public class FolderItem
     {
         public string Path { get; set; }
-        public string Name => System.IO.Path.GetFileName(Path) ?? Path;
-        public ObservableCollection<FolderItem> SubFolders { get; set; } = new();
+        public string Name {
+            get
+            {
+                string res = System.IO.Path.GetFileName(Path) ?? Path;
+                if (res.Length == 0)
+                    res = Path; // Root folder
+                return res;
+            }
+        }
+        public ObservableCollection<FolderItem> SubFolders { get; set; } = [];
 
         private bool _isLoaded;
 

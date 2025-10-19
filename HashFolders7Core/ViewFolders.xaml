@@ -13,16 +13,6 @@
 
         <!-- Left Panel: Drive Selector + Folder Tree -->
         <DockPanel Grid.Column="0">
-            <ComboBox Name="DriveSelector"
-                    DockPanel.Dock="Top"
-                    Margin="5"
-                    SelectionChanged="DriveSelector_SelectionChanged">
-                <ComboBoxItem Content="C:\" />
-                <ComboBoxItem Content="D:\" />
-                <ComboBoxItem Content="E:\" />
-                <ComboBoxItem Content="R:\" />
-            </ComboBox>
-
             <TreeView Name="FolderTree"
                     SelectedItemChanged="FolderTree_SelectedItemChanged">
                 <TreeView.ItemTemplate>

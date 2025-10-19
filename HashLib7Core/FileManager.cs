@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Microsoft.VisualBasic.FileIO;
 
 namespace HashLib7

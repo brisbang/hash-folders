@@ -1,14 +1,6 @@
-﻿using Microsoft.Graph.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
 using Microsoft.Data.SqlClient;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace HashLib7
