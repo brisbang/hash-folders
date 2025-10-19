@@ -255,7 +255,7 @@ namespace HashLib7
                 if (populateBackupLocations)
                 {
                     info.backupLocations = [];
-                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' ORDER BY Path, Name", info.hash);
+                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.path, f.name);
                     using SqlCommand cmdBackups = new(sqlBackups, conn);
                     using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
                     while (readerBackups.Read())

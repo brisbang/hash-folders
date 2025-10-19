@@ -79,10 +79,10 @@ namespace HashFolders
 //                    InfoFilename.Text = $"Filename: {info.filename}";
                     InfoHash.Text = $"Hash: {info.hash}";
                     StringBuilder sb = new();
-                    foreach (var fp in info.backupLocations)
+                    foreach (var pf in info.backupLocations)
                     {
                         if (sb.Length > 0) sb.Append(", ");
-                        sb.Append(fp.ToString());
+                        sb.Append(pf.ToString());
                     }
                     InfoBackups.Text = $"Backups: {sb.ToString()}";
                 }

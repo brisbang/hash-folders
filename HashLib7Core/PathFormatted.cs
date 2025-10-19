@@ -41,5 +41,10 @@ namespace HashLib7
             this.name = name;
             fullName = String.Format("{0}\\{1}", path, name);
         }
+
+        public override string ToString()
+        {
+            return fullName;
+        }
     }
 }
