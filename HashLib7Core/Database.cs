@@ -252,7 +252,7 @@ namespace HashLib7
                     lastModified = (DateTime)readerHeader[4]
                 };
                 readerHeader.Close();
-                if (populateBackupLocations)
+                if (populateBackupLocations && info.size > 0)
                 {
                     info.backupLocations = [];
                     string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.path, f.name);

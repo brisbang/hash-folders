@@ -14,6 +14,7 @@ namespace HashLib7
     {
         public readonly string path;
         public readonly string name;
+        public string Name => this.name;
         public readonly string fullName;
         public PathFormatted(string filename)
         {

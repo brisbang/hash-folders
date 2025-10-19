@@ -13,18 +13,18 @@ namespace HashLib7
     {
         private static string _dataPath;
         private static string _connStr;
-        private static object _logMutex;
+        public static string DefaultDrive { get; private set; }
         private static ILogger<Config> _logger;
         public static bool LogDebug { get; private set; }
         private static IServiceProvider _provider;
 
-        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, bool logDebug)
+        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, string defaultDrive, bool logDebug)
         {
             _provider = provider;
             _dataPath = dataPath;
             _connStr = connStr;
-            _logMutex = new object();
             _logger = provider.GetRequiredService<ILogger<Config>>();
+            DefaultDrive = defaultDrive;
             LogDebug = logDebug;
         }
 

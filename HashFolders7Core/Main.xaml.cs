@@ -30,8 +30,9 @@ namespace HashFolders
         {
             string dataPath = System.Configuration.ConfigurationManager.AppSettings["dataPath"];
             string connStr = System.Configuration.ConfigurationManager.AppSettings["connectionString"];
-            string debug = System.Configuration.ConfigurationManager.AppSettings["log_debug"];
-            Config.SetParameters(App.ServiceProvider, dataPath, connStr, debug == "true");
+            string debug = System.Configuration.ConfigurationManager.AppSettings["logDebug"];
+            string defaultDrive = System.Configuration.ConfigurationManager.AppSettings["defaultDrive"];
+            Config.SetParameters(App.ServiceProvider, dataPath, connStr, defaultDrive, debug == "true");
         }
 
         private void mnuReportFolders_Click(object sender, RoutedEventArgs e)

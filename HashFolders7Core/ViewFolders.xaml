@@ -6,9 +6,9 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="5*" />
+            <ColumnDefinition Width="4*" />
         </Grid.ColumnDefinitions>
 
         <!-- Left Panel: Drive Selector + Folder Tree -->
@@ -41,7 +41,10 @@
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Gray"/>
 
         <!-- Middle Panel: File List -->
-        <ListBox Name="FileList" Grid.Column="2" SelectionChanged="FileList_SelectionChanged" />
+        <ListBox Name="FileList"
+                Grid.Column="2"
+                DisplayMemberPath="Name"
+                SelectionChanged="FileList_SelectionChanged" />
 
         <!-- Splitter between Middle and Right -->
         <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Gray"/>
@@ -55,7 +58,15 @@
                     <TextBlock Name="InfoSize" />
                     <TextBlock Name="InfoFilename" />
                     <TextBlock Name="InfoHash" />
-                    <TextBlock Name="InfoBackups" TextWrapping="Wrap" />
+                    <Expander Name="BackupExpander" Header="Backup Locations" IsExpanded="False" Margin="0,5,0,5">
+                        <ItemsControl Name="BackupList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Expander>
                 </StackPanel>
 
                 <!-- Action Buttons -->
@@ -68,7 +79,16 @@
                 </StackPanel>
 
                 <!-- Image Preview -->
-                <Image Name="ImagePreview" Stretch="Uniform" />
+                <Grid>
+                    <Image Name="ImagePreview" Stretch="Uniform" />
+                    <TextBlock Name="ImageUnavailableMessage"
+                            Text="Preview unavailable"
+                            Foreground="Gray"
+                            FontStyle="Italic"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed" />
+                </Grid>
             </DockPanel>
         </Border>
     </Grid>

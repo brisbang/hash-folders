@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,8 +18,21 @@ namespace HashFolders
         public ViewFolders()
         {
             InitializeComponent();
-            DriveSelector.SelectedIndex = 0; // Default to C:\
+            SetDefaultDrive();
             FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
+        }
+
+        private void SetDefaultDrive()
+        {
+            // Set default drive to E:\
+            foreach (ComboBoxItem item in DriveSelector.Items)
+            {
+                if (item.Content?.ToString()[0] == Config.DefaultDrive[0])
+                {
+                    DriveSelector.SelectedItem = item;
+                    return;
+                }
+            }
         }
 
         private void DriveSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -53,7 +67,7 @@ namespace HashFolders
                 {
                     foreach (var file in Directory.GetFiles(folder.Path))
                     {
-                        FileList.Items.Add(file);
+                        FileList.Items.Add(new PathFormatted(file));
                     }
                 }
                 catch { /* Ignore access errors */ }
@@ -62,39 +76,64 @@ namespace HashFolders
 
         private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (FileList.SelectedItem is string filePath && IsImageFile(filePath))
+            PathFormatted filePath;
+            try
             {
-                try
-                {
-                    // Load image with EXIF rotation
-                    using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                    var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                    var frame = decoder.Frames[0];
-                    ImagePreview.Source = ApplyExifRotation(frame);
+                filePath = FileList.SelectedItem as PathFormatted;
+            }
+            catch
+            {
+                HideImagePreview();
+                return;
+            }
+            ShowImageDetail(filePath);
+            ShowFileDetail(filePath);
+        }
 
-                    // Load summary info
-                    var info = FileManager.RetrieveFile(filePath);
-//                    InfoPath.Text = $"Path: {info.path}";
-                    InfoSize.Text = $"Size: {info.size:N0} bytes";
-//                    InfoFilename.Text = $"Filename: {info.filename}";
-                    InfoHash.Text = $"Hash: {info.hash}";
-                    StringBuilder sb = new();
-                    foreach (var pf in info.backupLocations)
-                    {
-                        if (sb.Length > 0) sb.Append(", ");
-                        sb.Append(pf.ToString());
-                    }
-                    InfoBackups.Text = $"Backups: {sb.ToString()}";
-                }
-                catch
+        private void ShowImageDetail(PathFormatted filePath)
+        {
+            try
+            {
+                if (!IsImageFile(filePath.fullName))
                 {
-                    ImagePreview.Source = null;
+                    HideImagePreview();
+                    return;
                 }
+                // Load image with EXIF rotation
+                using var stream = new FileStream(filePath.fullName, FileMode.Open, FileAccess.Read);
+                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                var frame = decoder.Frames[0];
+                ImagePreview.Source = ApplyExifRotation(frame);
+                ImageUnavailableMessage.Visibility = Visibility.Collapsed;
+            }
+            catch
+            {
+                HideImagePreview();
+            }
+        }
+
+        private void ShowFileDetail(PathFormatted filePath)
+        {
+            // Load summary info
+            var info = FileManager.RetrieveFile(filePath);
+            InfoSize.Text = $"Size: {info.size:N0} bytes";
+            InfoHash.Text = $"Hash: {info.hash}";
+            if (info.size == 0)
+            {
+                BackupExpander.Header = "Backups - File is empty";
+                BackupList.ItemsSource = null;
             }
             else
             {
-                ImagePreview.Source = null;
+                BackupExpander.Header = $"Backups - ({info.backupLocations.Count})";
+                BackupList.ItemsSource = info.backupLocations;
             }
+        }
+
+        private void HideImagePreview()
+        {
+            ImagePreview.Source = null;
+            ImageUnavailableMessage.Visibility = Visibility.Visible;
         }
 
         private void ActionButton_Click(object sender, RoutedEventArgs e)
@@ -117,26 +156,31 @@ namespace HashFolders
 
         private void HandleDeleteAction()
         {
-            if (FileList.SelectedItem is string filePath)
+            PathFormatted filePath; 
+            try
             {
-                if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
-                {
+                filePath = FileList.SelectedItem as PathFormatted;
+            }
+            catch {
+                return;
+            }
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
 
-                    try
-                    {
-                        HashLib7.FileManager.DeleteFile(filePath);
-                        // Remove from file list
-                        FileList.Items.Remove(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting file: {ex.Message}", "Delete Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                else
+                try
                 {
-                    MessageBox.Show("To delete this file hold down the shift key and click again", "Delete Confirmation", MessageBoxButton.OK, MessageBoxImage.Information);
+                    HashLib7.FileManager.DeleteFile(filePath);
+                    // Remove from file list
+                    FileList.Items.Remove(filePath);
                 }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting file: {ex.Message}", "Delete Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("To delete this file hold down the shift key and click again", "Delete Confirmation", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
