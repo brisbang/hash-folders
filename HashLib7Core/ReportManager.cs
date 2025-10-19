@@ -45,7 +45,7 @@ namespace HashLib7
                     State = StateEnum.Running;
                     for (int i = 0; i < numThreads; i++)
                     {
-                        System.Threading.Thread thread = new System.Threading.Thread(new System.Threading.ThreadStart(this.ExecuteInternal));
+                        System.Threading.Thread thread = new(new System.Threading.ThreadStart(this.ExecuteInternal));
                         thread.Start();
                         _threads.Add(thread);
                     }

@@ -32,5 +32,6 @@ namespace HashLib7
         {
             return System.IO.File.OpenRead(file);
         }
+
     }
 }

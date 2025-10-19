@@ -10,7 +10,7 @@ namespace HashLib7
     /// <summary>
     /// Represents a path broken into database format
     /// </summary>
-    internal class PathFormatted
+    public class PathFormatted
     {
         public readonly string path;
         public readonly string name;

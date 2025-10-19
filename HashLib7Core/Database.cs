@@ -24,11 +24,6 @@ namespace HashLib7
             _connectionString = connString;
         }
 
-        public int NumFilesInLibrary()
-        {
-            return ExecuteScalar("SELECT COUNT(*) FROM [dbo].[FileDetail]");
-        }
-
         private int ExecuteNonQuery(string sql)
         {
             try
@@ -212,7 +207,6 @@ namespace HashLib7
         //Used where the fingerprint no longer matches
         internal void DeleteFile(PathFormatted f)
         {
-            Config.LogInfo("Deleting record for " + f.fullName + " as it is no longer found");
             string sqlDelete = SafeSql("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
             ExecuteNonQuery(sqlDelete);
         }
@@ -230,6 +224,44 @@ namespace HashLib7
                 while (reader.Read())
                     res.Add(new PathFormatted(reader[0] as string, reader[1] as string));
                 return res;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
+        }
+
+        internal FileInfoDetailed GetFileInfoDetailed(PathFormatted f, bool populateBackupLocations)
+        {
+            try
+            {
+                string sqlHeader = SafeSql("SELECT Path, Name, Size, Hash, LastModified FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+                using SqlConnection conn = new(_connectionString);
+                using SqlCommand cmdHeader = new(sqlHeader, conn);
+                conn.Open();
+                using SqlDataReader readerHeader = cmdHeader.ExecuteReader();
+                if (!readerHeader.Read())
+                    return null;
+                FileInfoDetailed info = new()
+                {
+                    path = readerHeader[0] as string,
+                    filename = readerHeader[1] as string,
+                    size = (long)readerHeader[2],
+                    hash = readerHeader[3] as string,
+                    lastModified = (DateTime)readerHeader[4]
+                };
+                readerHeader.Close();
+                if (populateBackupLocations)
+                {
+                    info.backupLocations = [];
+                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' ORDER BY Path, Name", info.hash);
+                    using SqlCommand cmdBackups = new(sqlBackups, conn);
+                    using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
+                    while (readerBackups.Read())
+                        info.backupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
+                }
+                return info;
             }
             catch (Exception ex)
             {

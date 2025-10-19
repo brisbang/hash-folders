@@ -184,7 +184,9 @@ namespace HashLib7
                     string f = _previouslyRecordedFiles.Values[0];
                     try
                     {
-                        Config.GetDatabase().DeleteFile(new PathFormatted(f));
+                        PathFormatted pf = new(f);
+                        Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
+                        Config.GetDatabase().DeleteFile(pf);
                     }
                     catch (Exception ex)
                     {
