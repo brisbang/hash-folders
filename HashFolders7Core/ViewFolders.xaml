@@ -46,8 +46,18 @@
                 <StackPanel Name="ImageInfoPanel" DockPanel.Dock="Top" Margin="0,0,0,10">
                     <TextBlock Name="InfoPath" />
                     <TextBlock Name="InfoSize" />
+                    <ProgressBar Name="InfoSizeBar"
+                                Minimum="0" Maximum="100"
+                                Height="16" Margin="0,2"
+                                ToolTip="File size"
+                                Foreground="Gray" />
+                    <TextBlock Name="InfoSizeAll" />
+                    <ProgressBar Name="InfoSizeBarAll"
+                                Minimum="0" Maximum="100"
+                                Height="16" Margin="0,2"
+                                ToolTip="File size"
+                                Foreground="Gray" />
                     <TextBlock Name="InfoFilename" />
-                    <TextBlock Name="InfoHash" />
                     <Expander Name="BackupExpander" Header="Backup Locations" IsExpanded="False" Margin="0,5,0,5">
                         <ItemsControl Name="BackupList">
                             <ItemsControl.ItemTemplate>
@@ -58,7 +68,6 @@
                         </ItemsControl>
                     </Expander>
                 </StackPanel>
-
                 <!-- Action Buttons -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,10">
                     <Button Content="None" Click="ActionButton_Click" Margin="2"/>
@@ -79,6 +88,7 @@
                             VerticalAlignment="Center"
                             Visibility="Collapsed" />
                 </Grid>
+                <TextBlock Name="InfoHash" />
             </DockPanel>
         </Border>
     </Grid>

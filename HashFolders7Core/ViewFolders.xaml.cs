@@ -93,8 +93,10 @@ namespace HashFolders
         {
             // Load summary info
             var info = FileManager.RetrieveFile(filePath);
-            InfoSize.Text = $"Size: {info.size:N0} bytes";
+            var numBackups = info.backupLocations?.Count ?? 0;
             InfoHash.Text = $"Hash: {info.hash}";
+            DisplaySize("Size", info.size, InfoSize, InfoSizeBar);
+            DisplaySize("Total size", info.size * (numBackups + 1), InfoSizeAll, InfoSizeBarAll);
             if (info.size == 0)
             {
                 BackupExpander.Header = "Backups - File is empty";
@@ -104,6 +106,60 @@ namespace HashFolders
             {
                 BackupExpander.Header = $"Backups - ({info.backupLocations.Count})";
                 BackupList.ItemsSource = info.backupLocations;
+            }
+        }
+
+        private static void DisplaySize(string header, long size, TextBlock infoSize, ProgressBar infoSizeBar)
+        {
+            infoSize.Text = $"{header}: {size:N0} bytes";
+            infoSizeBar.Value = GetLogSizePercent(size);
+            infoSizeBar.ToolTip = $"{size:N0} bytes";
+            infoSizeBar.Foreground = GetSizeGradientBrush(size);
+        }
+
+        private static double GetLogSizePercent(long size)
+        {
+            const double minSize = 1;               // Avoid log(0)
+            const double maxSize = 1_000_000_000;     // 100MB upper bound
+
+            double clamped = Math.Max(size, minSize);
+            double logMin = Math.Log10(minSize);
+            double logMax = Math.Log10(maxSize);
+            double logSize = Math.Log10(clamped);
+
+            return ((logSize - logMin) / (logMax - logMin)) * 100;
+        }
+
+        private static Brush GetSizeGradientBrush(long size)
+        {
+            return new SolidColorBrush(InterpolateColor(size));
+        }
+
+        private static Color InterpolateColor(long size)
+        {
+            const double orangeThreshold = 5_000_000;   // 5MB
+            const double redThreshold = 100_000_000;    // 100MB
+
+            if (size <= orangeThreshold)
+            {
+                // Green to Orange
+                double t = size / orangeThreshold;
+                byte r = (byte)(t * 255);     // 0 → 255
+                byte g = 255;                 // stays full
+                return Color.FromRgb(r, g, 0); // (r,255,0)
+            }
+            else if (size <= redThreshold)
+            {
+                // Orange to Red
+                double t = (size - orangeThreshold) / (redThreshold - orangeThreshold);
+                byte r = 255;                 // stays full
+                byte g = (byte)((1 - t) * 255); // 255 → 0
+                return Color.FromRgb(r, g, 0); // (255,g,0)
+            }
+            else
+            {
+                // Beyond red threshold — solid red
+                return Color.FromRgb(255, 0, 0);
             }
         }
 
