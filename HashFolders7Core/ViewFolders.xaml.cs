@@ -18,7 +18,7 @@ namespace HashFolders
         public ViewFolders()
         {
             InitializeComponent();
-
+            HideFileDetail();
 
             var rootFolders = new List<FolderItem>();
             foreach (string drive in Config.Drives)
@@ -53,18 +53,24 @@ namespace HashFolders
 
         private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            PathFormatted filePath;
+            PathFormatted filePath = null;
             try
             {
                 filePath = FileList.SelectedItem as PathFormatted;
             }
-            catch
+            catch { }
+            if (filePath == null)
             {
-                HideImagePreview();
+                HideFileDetail();
                 return;
             }
-            ShowImageDetail(filePath);
             ShowFileDetail(filePath);
+            ShowImageDetail(filePath);
+        }
+
+        private void HideFileDetail()
+        {
+            RightDockPanel.Visibility = Visibility.Hidden;
         }
 
         private void ShowImageDetail(PathFormatted filePath)
@@ -92,11 +98,13 @@ namespace HashFolders
         private void ShowFileDetail(PathFormatted filePath)
         {
             // Load summary info
+            RightDockPanel.Visibility = Visibility.Visible;
             var info = FileManager.RetrieveFile(filePath);
             var numBackups = info.backupLocations?.Count ?? 0;
+            FileToolbar.Visibility = Visibility.Visible;
             InfoHash.Text = $"Hash: {info.hash}";
             DisplaySize("Size", info.size, InfoSize, InfoSizeBar);
-            DisplaySize("Total size", info.size * (numBackups + 1), InfoSizeAll, InfoSizeBarAll);
+            DisplaySize("Backup size", info.size * numBackups, InfoSizeAll, InfoSizeBarAll);
             if (info.size == 0)
             {
                 BackupExpander.Header = "Backups - File is empty";

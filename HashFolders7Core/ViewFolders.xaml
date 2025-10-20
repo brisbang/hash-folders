@@ -41,23 +41,35 @@
 
         <!-- Right Panel: Info + Buttons + Image -->
         <Border Grid.Column="4" BorderBrush="LightGray" BorderThickness="1" Padding="5">
-            <DockPanel>
+            <DockPanel Name="RightDockPanel">
                 <!-- Summary Info -->
                 <StackPanel Name="ImageInfoPanel" DockPanel.Dock="Top" Margin="0,0,0,10">
-                    <TextBlock Name="InfoPath" />
-                    <TextBlock Name="InfoSize" />
-                    <ProgressBar Name="InfoSizeBar"
-                                Minimum="0" Maximum="100"
-                                Height="16" Margin="0,2"
-                                ToolTip="File size"
-                                Foreground="Gray" />
-                    <TextBlock Name="InfoSizeAll" />
-                    <ProgressBar Name="InfoSizeBarAll"
-                                Minimum="0" Maximum="100"
-                                Height="16" Margin="0,2"
-                                ToolTip="File size"
-                                Foreground="Gray" />
-                    <TextBlock Name="InfoFilename" />
+                    <Grid x:Name="RightPanel">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" /> <!-- Left half -->
+                            <ColumnDefinition Width="*" /> <!-- Right half -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left content of right-hand panel -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Name="InfoSize" />
+                            <ProgressBar Name="InfoSizeBar"
+                                        Minimum="0" Maximum="100"
+                                        Height="16" Margin="0,2"
+                                        ToolTip="File size"
+                                        Foreground="Gray" />
+                        </StackPanel>
+
+                        <!-- InfoSize and InfoSizeBar grouped together -->
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Name="InfoSizeAll" />
+                            <ProgressBar Name="InfoSizeBarAll"
+                                        Minimum="0" Maximum="100"
+                                        Height="16" Margin="0,2"
+                                        ToolTip="File size"
+                                        Foreground="Gray" />
+                        </StackPanel>
+                    </Grid>
                     <Expander Name="BackupExpander" Header="Backup Locations" IsExpanded="False" Margin="0,5,0,5">
                         <ItemsControl Name="BackupList">
                             <ItemsControl.ItemTemplate>
@@ -69,7 +81,7 @@
                     </Expander>
                 </StackPanel>
                 <!-- Action Buttons -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,10">
+                <StackPanel x:Name="FileToolbar" Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,10" Visibility="Hidden">
                     <Button Content="None" Click="ActionButton_Click" Margin="2"/>
                     <Button Content="Basic" Click="ActionButton_Click" Margin="2"/>
                     <Button Content="High" Click="ActionButton_Click" Margin="2"/>
@@ -77,18 +89,32 @@
                     <Button Content="Delete" Click="ActionButton_Click" Margin="2"/>
                 </StackPanel>
 
-                <!-- Image Preview -->
                 <Grid>
-                    <Image Name="ImagePreview" Stretch="Uniform" />
-                    <TextBlock Name="ImageUnavailableMessage"
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /> <!-- InfoHash or other controls -->
+                        <RowDefinition Height="*" /> <!-- Image area -->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="InfoHash"
+                            Grid.Row="0"
+                            Margin="0,8,0,0"/>
+
+                    <Viewbox Grid.Row="1" Stretch="Uniform">
+                        <Image x:Name="ImagePreview"
+                            Stretch="Uniform"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Viewbox>
+                    <TextBlock Grid.Row="1" Name="ImageUnavailableMessage"
                             Text="Preview unavailable"
                             Foreground="Gray"
                             FontStyle="Italic"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="Collapsed" />
+
+
                 </Grid>
-                <TextBlock Name="InfoHash" />
             </DockPanel>
         </Border>
     </Grid>
