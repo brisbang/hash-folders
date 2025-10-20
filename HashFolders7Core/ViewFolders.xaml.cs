@@ -102,7 +102,7 @@ namespace HashFolders
             // Load summary info
             RightDockPanel.Visibility = Visibility.Visible;
             var info = FileManager.RetrieveFile(filePath);
-            var numBackups = info.backupLocations?.Count ?? 0;
+            var numBackups = info.backupLocations.Count;
             FileToolbar.Visibility = Visibility.Visible;
             InfoHash.Text = $"Hash: {info.hash}";
             DisplaySize("Size", info.size, InfoSize, InfoSizeBar);
@@ -158,25 +158,33 @@ namespace HashFolders
                     }
                 }
             }
-            DisplayRisk(RiskDiskFailure, riskDiskFailure);
-            DisplayRisk(RiskCorruption, riskCorruption);
-            DisplayRisk(RiskTheft, riskTheft);
-            DisplayRisk(RiskFire, true);
+            DisplayRisk(RiskDiskFailure, BorderDiskFailure, riskDiskFailure);
+            DisplayRisk(RiskCorruption, BorderCorruption, riskCorruption);
+            DisplayRisk(RiskTheft, BorderTheft, riskTheft);
+            DisplayRisk(RiskFire, BorderFire, true);
         }
 
-        private static void DisplayRisk(TextBlock risk, bool atRisk)
+        private static void DisplayRisk(TextBlock risk, Border border, bool atRisk)
         {
             risk.Text = atRisk ? "At Risk" : "Mitigated";
-            risk.Foreground = atRisk ? Brushes.Red : Brushes.Green;
+            border.Background = atRisk ? Brushes.Red : Brushes.Green;
         }
 
         private static void DisplaySize(string header, long size, TextBlock infoSize, ProgressBar infoSizeBar)
         {
             infoSize.Text = $"{header}: {size:N0} bytes";
-            infoSizeBar.Value = GetLogSizePercent(size);
+            infoSizeBar.Value = GetSizePercent(size);
             infoSizeBar.ToolTip = $"{size:N0} bytes";
             infoSizeBar.Foreground = GetSizeGradientBrush(size);
         }
+
+        private static double GetSizePercent(long size)
+        {
+            const long maxSize = 100_000_000; // 100MB
+            if (size >= maxSize)
+                return 100;
+            return ((double)size / maxSize) * 100;
+        }  
 
         private static double GetLogSizePercent(long size)
         {

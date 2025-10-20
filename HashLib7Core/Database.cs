@@ -241,12 +241,12 @@ namespace HashLib7
                     filename = readerHeader[1] as string,
                     size = (long)readerHeader[2],
                     hash = readerHeader[3] as string,
-                    lastModified = (DateTime)readerHeader[4]
+                    lastModified = (DateTime)readerHeader[4],
+                    backupLocations = []
                 };
                 readerHeader.Close();
                 if (populateBackupLocations && info.size > 0)
                 {
-                    info.backupLocations = [];
                     string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.path, f.name);
                     using SqlCommand cmdBackups = new(sqlBackups, conn);
                     using SqlDataReader readerBackups = cmdBackups.ExecuteReader();

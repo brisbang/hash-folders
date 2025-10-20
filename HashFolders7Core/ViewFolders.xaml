@@ -77,26 +77,28 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="0">
-                            <TextBlock Text="Disk Failure: " />
-                            <TextBlock Name="RiskDiskFailure"/>
-                        </StackPanel>
+                        <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="Disk Failure: " />
+                        <Border Grid.Row="0" Grid.Column="1" Name="BorderDiskFailure">
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Name="RiskDiskFailure" Foreground="White"/>
+                        </Border>
+                        <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="Corruption: " />
+                        <Border Grid.Row="1" Grid.Column="1" Name="BorderCorruption">
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Name="RiskCorruption" Foreground="White"/>
+                        </Border>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="1">
-                            <TextBlock Text="Corruption: " />
-                            <TextBlock Name="RiskCorruption"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Grid.Row="2">
-                            <TextBlock Text="Theft: " />
-                            <TextBlock Name="RiskTheft"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Grid.Row="3">
-                            <TextBlock Text="Fire: " />
-                            <TextBlock Name="RiskFire"/>
-                        </StackPanel>
+                        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="Theft: " />
+                        <Border Grid.Row="2" Grid.Column="1" Name="BorderTheft">
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Name="RiskTheft" Foreground="White"/>
+                        </Border>
+                        <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="Fire: " />
+                        <Border Grid.Row="3" Grid.Column="1" Name="BorderFire">
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Name="RiskFire" Foreground="White"/>
+                        </Border>
                     </Grid>
                     <Expander Name="BackupExpander" Header="Backup Locations" IsExpanded="False" Margin="0,5,0,5">
                         <ItemsControl Name="BackupList">
