@@ -8,12 +8,12 @@ namespace HashLib7
     {
         private static string _dataPath;
         private static string _connStr;
-        public static string[] Drives { get; private set; }
+        public static DriveInfoList Drives { get; private set; }
         private static ILogger<Config> _logger;
         public static bool LogDebug { get; private set; }
         private static IServiceProvider _provider;
 
-        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, string[] drives, bool logDebug)
+        public static void SetParameters(IServiceProvider provider, string dataPath, string connStr, DriveInfoList drives, bool logDebug)
         {
             _provider = provider;
             _dataPath = dataPath;

@@ -10,6 +10,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using HashLib7;
+using Microsoft.Graph.Models;
+using Microsoft.Graph.Solutions.BackupRestore;
 
 namespace HashFolders
 {
@@ -21,8 +23,8 @@ namespace HashFolders
             HideFileDetail();
 
             var rootFolders = new List<FolderItem>();
-            foreach (string drive in Config.Drives)
-                rootFolders.Add(new FolderItem() { Path = drive + ":\\" });
+            foreach (HashLib7.DriveInfo drive in Config.Drives.GetAll())
+                rootFolders.Add(new FolderItem() { Path = drive.Letter + ":\\" });
             FolderTree.ItemsSource = rootFolders;
             FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
         }
@@ -115,6 +117,57 @@ namespace HashFolders
                 BackupExpander.Header = $"Backups - ({info.backupLocations.Count})";
                 BackupList.ItemsSource = info.backupLocations;
             }
+            AssessRisks(info);
+
+        }
+
+        private void AssessRisks(FileInfoDetailed info)
+        {
+            var localDriveInfo = Config.Drives.Get(info.path);
+            List<HashLib7.DriveInfo> backupDriveInfos = [];
+            if (info.backupLocations != null)
+            {
+                foreach (var backup in info.backupLocations)
+                {
+                    var driveInfo = Config.Drives.Get(backup.path);
+                    if (!backupDriveInfos.Contains(driveInfo))
+                        backupDriveInfos.Add(driveInfo);
+                }
+            }
+            bool riskTheft = true;
+            foreach (var driveInfo in backupDriveInfos)
+            {
+                if (driveInfo.MitigatesRiskOfTheft(localDriveInfo))
+                {
+                    riskTheft = false;
+                    break;
+                }
+            }
+            bool riskCorruption = info.backupLocations?.Count == 0;
+            bool riskDiskFailure = true;
+            if (localDriveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                riskDiskFailure = false;
+            else
+            {
+                foreach (var driveInfo in backupDriveInfos)
+                {
+                    if (driveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                    {
+                        riskDiskFailure = false;
+                        break;
+                    }
+                }
+            }
+            DisplayRisk(RiskDiskFailure, riskDiskFailure);
+            DisplayRisk(RiskCorruption, riskCorruption);
+            DisplayRisk(RiskTheft, riskTheft);
+            DisplayRisk(RiskFire, true);
+        }
+
+        private static void DisplayRisk(TextBlock risk, bool atRisk)
+        {
+            risk.Text = atRisk ? "At Risk" : "Mitigated";
+            risk.Foreground = atRisk ? Brushes.Red : Brushes.Green;
         }
 
         private static void DisplaySize(string header, long size, TextBlock infoSize, ProgressBar infoSizeBar)

@@ -1,6 +1,8 @@
 ﻿using System;
 using HashLib7;
 using System.Windows;
+using System.Data.Common;
+using System.Collections.Generic;
 
 namespace HashFolders
 {
@@ -32,7 +34,24 @@ namespace HashFolders
             string connStr = System.Configuration.ConfigurationManager.AppSettings["connectionString"];
             string debug = System.Configuration.ConfigurationManager.AppSettings["logDebug"];
             string[] drives = System.Configuration.ConfigurationManager.AppSettings["drives"].Split(',');
-            Config.SetParameters(App.ServiceProvider, dataPath, connStr, drives, debug == "true");
+            DriveInfoList driveInfos = LoadDriveInfos(drives);
+            Config.SetParameters(App.ServiceProvider, dataPath, connStr, driveInfos, debug == "true");
+        }
+
+        private static DriveInfoList LoadDriveInfos(string[] drives)
+        {
+            DriveInfoList res = new();
+            foreach (string drive in drives)
+            {
+                try
+                {
+                    string[] parts = drive.Split('|');
+                    res.Add(new DriveInfo(parts[0][0], int.Parse(parts[1]), parts[2]));
+                }
+                catch { }
+            }
+            
+            return res;
         }
 
         private void mnuReportFolders_Click(object sender, RoutedEventArgs e)
