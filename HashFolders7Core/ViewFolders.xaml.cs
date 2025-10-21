@@ -17,6 +17,14 @@ namespace HashFolders
 {
     public partial class ViewFolders : Window
     {
+        private class BarValue
+        {
+            public TextBlock Label { get; set; }
+            public long MaxSize { get; set; }
+        }
+        private readonly List<BarValue> sizeBars;
+        private readonly List<BarValue> sizeBackupBars;
+
         public ViewFolders()
         {
             InitializeComponent();
@@ -27,6 +35,33 @@ namespace HashFolders
                 rootFolders.Add(new FolderItem() { Path = drive.Letter + ":\\" });
             FolderTree.ItemsSource = rootFolders;
             FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
+
+            sizeBars =
+                [
+                new() {Label = InfoSize0, MaxSize=0},
+                new() {Label = InfoSize100K, MaxSize=100_000},
+                new() {Label = InfoSize1M, MaxSize=1_000_000},
+                new() {Label = InfoSize10M, MaxSize=10_000_000},
+                new() {Label = InfoSize50M, MaxSize=50_000_000},
+                new() {Label = InfoSize100M, MaxSize=100_000_000},
+                new() {Label = InfoSize500M, MaxSize=500_000_000},
+                new() {Label = InfoSize1G, MaxSize=1_000_000_000},
+                new() {Label = InfoSizeLarge, MaxSize=long.MaxValue}
+                ];
+
+            sizeBackupBars =
+                [
+                new() {Label = BackupSize0, MaxSize=0},
+                new() {Label = BackupSize100K, MaxSize=100_000},
+                new() {Label = BackupSize1M, MaxSize=1_000_000},
+                new() {Label = BackupSize10M, MaxSize=10_000_000},
+                new() {Label = BackupSize50M, MaxSize=50_000_000},
+                new() {Label = BackupSize100M, MaxSize=100_000_000},
+                new() {Label = BackupSize500M, MaxSize=500_000_000},
+                new() {Label = BackupSize1G, MaxSize=1_000_000_000},
+                new() {Label = BackupSizeLarge, MaxSize=long.MaxValue}
+                ];
+
         }
 
         private void FolderTree_Expanded(object sender, RoutedEventArgs e)
@@ -102,11 +137,10 @@ namespace HashFolders
             // Load summary info
             RightDockPanel.Visibility = Visibility.Visible;
             var info = FileManager.RetrieveFile(filePath);
-            var numBackups = info.backupLocations.Count;
             FileToolbar.Visibility = Visibility.Visible;
             InfoHash.Text = $"Hash: {info.hash}";
-            DisplaySize("Size", info.size, InfoSize, InfoSizeBar);
-            DisplaySize("Backup size", info.size * numBackups, InfoSizeAll, InfoSizeBarAll);
+            DisplaySize(info.size, sizeBars);
+            DisplaySize(info.backupLocations.Count * info.size, sizeBackupBars);
             if (info.size == 0)
             {
                 BackupExpander.Header = "Backups - File is empty";
@@ -170,12 +204,33 @@ namespace HashFolders
             border.Background = atRisk ? Brushes.Red : Brushes.Green;
         }
 
-        private static void DisplaySize(string header, long size, TextBlock infoSize, ProgressBar infoSizeBar)
+        private static void DisplaySize(long size, List<BarValue> sizeBars)
         {
-            infoSize.Text = $"{header}: {size:N0} bytes";
-            infoSizeBar.Value = GetSizePercent(size);
-            infoSizeBar.ToolTip = $"{size:N0} bytes";
-            infoSizeBar.Foreground = GetSizeGradientBrush(size);
+            bool selected = false;
+            foreach (var bar in sizeBars)
+            {
+                if (size <= bar.MaxSize && !selected)
+                {
+                    SetBar(bar, true, size);
+                    selected = true;
+                }
+                else
+                    SetBar(bar, false);
+            }
+        }
+
+        private static void SetBar(BarValue bar, bool highlight, long size = -1)
+        {
+            if (highlight)
+            {
+                bar.Label.ToolTip = $"{size:N0}";
+                bar.Label.Background = GetSizeGradientBrush(size);
+            }
+            else
+            {
+                bar.Label.ToolTip = null;
+                bar.Label.Background = Brushes.LightGray;
+            }
         }
 
         private static double GetSizePercent(long size)

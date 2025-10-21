@@ -52,22 +52,59 @@
 
                         <!-- Left content of right-hand panel -->
                         <StackPanel Grid.Column="0">
-                            <TextBlock Name="InfoSize" />
-                            <ProgressBar Name="InfoSizeBar"
-                                        Minimum="0" Maximum="100"
-                                        Height="16" Margin="0,2"
-                                        ToolTip="File size"
-                                        Foreground="Gray" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Name="InfoSize" Grid.Column="0" Text="Size" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize0" Grid.Column="1" Text="0" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize100K" Grid.Column="2" Text="100K" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize1M" Grid.Column="3" Text="1M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize10M" Grid.Column="4" Text="10M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize50M" Grid.Column="5" Text="50M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize100M" Grid.Column="6" Text="100M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize500M" Grid.Column="7" Text="500M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSize1G" Grid.Column="8" Text="1G" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="InfoSizeLarge" Grid.Column="9" Text=">1G" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                            </Grid>
                         </StackPanel>
 
-                        <!-- InfoSize and InfoSizeBar grouped together -->
                         <StackPanel Grid.Column="1">
-                            <TextBlock Name="InfoSizeAll" />
-                            <ProgressBar Name="InfoSizeBarAll"
-                                        Minimum="0" Maximum="100"
-                                        Height="16" Margin="0,2"
-                                        ToolTip="File size"
-                                        Foreground="Gray" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Name="BackupSize" Grid.Column="0" Text="Backups" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize0" Grid.Column="1" Text="0" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize100K" Grid.Column="2" Text="100K" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize1M" Grid.Column="3" Text="1M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize10M" Grid.Column="4" Text="10M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize50M" Grid.Column="5" Text="50M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize100M" Grid.Column="6" Text="100M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize500M" Grid.Column="7" Text="500M" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSize1G" Grid.Column="8" Text="1G" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                                <TextBlock Name="BackupSizeLarge" Grid.Column="9" Text=">1G" Padding="4" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                            </Grid>
                         </StackPanel>
                     </Grid>
                     <Grid x:Name="Risks">
