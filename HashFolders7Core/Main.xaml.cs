@@ -79,7 +79,7 @@ namespace HashFolders
                 MessageBox.Show(ex.ToString(), "View folders", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+/*
         private void mnuHashFolders_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -116,7 +116,7 @@ namespace HashFolders
                 MessageBox.Show(ex.ToString(), "Compare folders", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+*/
         private void mnuExitItem_Click(object sender, RoutedEventArgs e)
         {
             try

@@ -7,8 +7,6 @@
         mc:Ignorable="d"
         Title="Index folder" Height="100" Width="447">
     <Grid RenderTransformOrigin="0.569,0.855">
-        <Label Content="Folder:" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top"/>
-        <TextBox HorizontalAlignment="Left" Height="20" Margin="102,8,0,0" TextWrapping="NoWrap" VerticalAlignment="Top" Width="233" Name="tbFolder" TabIndex="0"/>
         <Label Content="Num threads:" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.433,1.846"/>
         <Button Content="Hash away" HorizontalAlignment="Left" Margin="347,36,0,0" VerticalAlignment="Top" Width="75" Name="btnHash" Click="btnHash_Click" RenderTransformOrigin="0.493,1.248" TabIndex="3"/>
         <TextBox HorizontalAlignment="Left" Height="20" Margin="102,33,0,0" TextWrapping="Wrap" Text="8" VerticalAlignment="Top" Width="233" x:Name="tbNumThreads" TabIndex="2"/>

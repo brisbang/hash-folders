@@ -9,7 +9,7 @@
     <DockPanel>
         <Menu VerticalAlignment="Top" HorizontalAlignment="Left" DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="Index folders..." Click="mnuHashFolders_Click"/>
+<!--                <MenuItem Header="Index folders..." Click="mnuHashFolders_Click"/> -->
                 <MenuItem Header="View folders..." Click="mnuViewFolders_Click"/>
                 <MenuItem Header="Report..." Click="mnuReportFolders_Click"/>
                 <Separator/>

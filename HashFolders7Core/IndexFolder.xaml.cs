@@ -10,11 +10,12 @@ namespace HashFolders
     public partial class IndexFolder : Window
     {
         private ThreadManager _activeHasher;
+        private string _folder;
 
-        public IndexFolder()
+        public IndexFolder(string folder)
         {
             InitializeComponent();
-            tbFolder.Text = HashLib7.UserSettings.RecentlyUsedFolder;
+            _folder = folder;
             tbNumThreads.Text = HashLib7.UserSettings.ThreadCount.ToString();
         }
 
@@ -24,8 +25,8 @@ namespace HashFolders
             {
                 _activeHasher = new ThreadManager();
                 //_activeHasher.ExecuteAsync(tbFolder.Text, int.Parse(tbNumThreads.Text), tbOneDriveUser.Text, tbOneDrivePassword.Text);
-                _activeHasher.ExecuteAsync(tbFolder.Text, int.Parse(tbNumThreads.Text));
-                Processing p = new Processing(_activeHasher);
+                _activeHasher.ExecuteAsync(_folder, int.Parse(tbNumThreads.Text));
+                Processing p = new(_activeHasher);
                 p.ShowDialog();
             }
             catch (Exception ex)
