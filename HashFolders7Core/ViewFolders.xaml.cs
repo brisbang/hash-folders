@@ -6,9 +6,11 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using HashLib7;
 using Microsoft.Graph.Models;
 using Microsoft.Graph.Solutions.BackupRestore;
@@ -24,18 +26,20 @@ namespace HashFolders
         }
         private readonly List<BarValue> sizeBars;
         private readonly List<BarValue> sizeBackupBars;
+        private string targetFilePath;
 
         public ViewFolders()
         {
             InitializeComponent();
             HideFileDetail();
 
+            targetFilePath = HashLib7.UserSettings.RecentlyUsedFolder;
             var rootFolders = new List<FolderItem>();
+            FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
             foreach (HashLib7.DriveInfo drive in Config.Drives.GetAll())
                 rootFolders.Add(new FolderItem() { Path = drive.Letter + ":\\" });
             FolderTree.ItemsSource = rootFolders;
-            FolderTree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderTree_Expanded));
-
+            FolderTree.Loaded += FolderTree_Loaded;
             sizeBars =
                 [
                 new() {Label = InfoSize0, MaxSize=0},
@@ -64,6 +68,11 @@ namespace HashFolders
 
         }
 
+        private void FolderTree_Loaded(object sender, RoutedEventArgs e)
+        {
+            SelectFolderPath(targetFilePath);
+        }
+
         private void FolderTree_Expanded(object sender, RoutedEventArgs e)
         {
             if (e.OriginalSource is TreeViewItem item && item.DataContext is FolderItem folder)
@@ -72,20 +81,92 @@ namespace HashFolders
             }
         }
 
+        public void SelectFolderPath(string fullPath)
+        {
+            TraverseLevel(FolderTree);
+        }
+
+        private void TraverseLevel(ItemsControl parent)
+        {
+            bool found = false;
+            if (targetFilePath == null)
+                return;
+            foreach (var item in parent.Items)
+            {
+                if (item is FolderItem folder &&
+                    targetFilePath.StartsWith(folder.Path, StringComparison.OrdinalIgnoreCase))
+                {
+                    found = true;
+                    var container = parent.ItemContainerGenerator.ContainerFromItem(item) as TreeViewItem;
+
+                    if (container == null)
+                    {
+                        parent.UpdateLayout();
+                        container = parent.ItemContainerGenerator.ContainerFromItem(item) as TreeViewItem;
+                    }
+
+                    if (container != null)
+                    {
+                        if (targetFilePath.Equals(folder.Path, StringComparison.OrdinalIgnoreCase))
+                        {
+                            container.IsSelected = true;
+                            container.BringIntoView();
+                            targetFilePath = null;
+                        }
+                        else
+                        {
+                            WaitForChildContainer(container);
+                            container.IsExpanded = true;
+                        }
+                    }
+
+                    break;
+                }
+            }
+            if (!found)
+            {
+                targetFilePath = null;
+            }
+        }
+
+        private void WaitForChildContainer(TreeViewItem parentContainer)
+        {
+            EventHandler handler = null;
+            handler = (sender, args) =>
+            {
+                if (parentContainer.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
+                {
+                    parentContainer.ItemContainerGenerator.StatusChanged -= handler;
+
+                    TraverseLevel(parentContainer);
+                }
+            };
+
+            parentContainer.ItemContainerGenerator.StatusChanged += handler;
+            parentContainer.UpdateLayout();
+        }
+
+
         private void FolderTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             if (FolderTree.SelectedItem is FolderItem folder)
             {
-                FileList.Items.Clear();
-                try
-                {
-                    foreach (var file in Directory.GetFiles(folder.Path))
-                    {
-                        FileList.Items.Add(new PathFormatted(file));
-                    }
-                }
-                catch { /* Ignore access errors */ }
+                HashLib7.UserSettings.RecentlyUsedFolder = folder.Path;
+                LoadFolderFiles(folder);
             }
+        }
+
+        private void LoadFolderFiles(FolderItem folder)
+        {
+            FileList.Items.Clear();
+            try
+            {
+                foreach (var file in Directory.GetFiles(folder.Path))
+                {
+                    FileList.Items.Add(new PathFormatted(file));
+                }
+            }
+            catch { /* Ignore access errors */ }
         }
 
         private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -254,10 +335,7 @@ namespace HashFolders
             return ((logSize - logMin) / (logMax - logMin)) * 100;
         }
 
-        private static Brush GetSizeGradientBrush(long size)
-        {
-            return new SolidColorBrush(InterpolateColor(size));
-        }
+        private static Brush GetSizeGradientBrush(long size) => new SolidColorBrush(InterpolateColor(size));
 
         private static Color InterpolateColor(long size)
         {
@@ -310,6 +388,24 @@ namespace HashFolders
             }
         }
 
+        private void IndexFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string selectedPath = "";
+                if (FolderTree.SelectedItem is FolderItem folder)
+                {
+                    selectedPath = folder.Path;
+                    IndexFolder i = new(selectedPath);
+                }
+                else
+                    MessageBox.Show("Please select a folder to index", "Index folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error indexing folder: {ex.Message}", "Index folder", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         private void HandleDeleteAction()
         {
