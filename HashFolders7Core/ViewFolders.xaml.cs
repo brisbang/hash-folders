@@ -392,14 +392,24 @@ namespace HashFolders
         {
             try
             {
-                string selectedPath = "";
-                if (FolderTree.SelectedItem is FolderItem folder)
+                if (!(FolderTree.SelectedItem is FolderItem folder))
                 {
-                    selectedPath = folder.Path;
-                    IndexFolder i = new(selectedPath);
-                }
-                else
                     MessageBox.Show("Please select a folder to index", "Index folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                int threadCount = 0;
+                while (threadCount == 0)
+                {
+                    string numThreads = InputBox.Show("This will index all files in the selected folder and its subfolders. This may take a while depending on the number of files.\n\nEnter the number of threads you wish to use.", "Index folder", HashLib7.UserSettings.ThreadCount.ToString());
+                    if (numThreads == null)
+                        return;
+                    if (!int.TryParse(numThreads, out threadCount) || threadCount <= 0)
+                        MessageBox.Show("Please enter a valid positive integer for the number of threads.", "Index folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                ThreadManager hasher = new();
+                hasher.ExecuteAsync(folder.Path, threadCount);
+                Processing p = new(hasher);
+                p.ShowDialog();
             }
             catch (Exception ex)
             {
