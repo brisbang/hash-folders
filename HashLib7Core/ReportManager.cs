@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class ReportManager
+    public class ReportManager : IAsyncManager
     {
         private List<System.Threading.Thread> _threads;
         private string _path;

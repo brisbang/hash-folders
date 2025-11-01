@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class ThreadManager
+    public class ThreadManager : IAsyncManager
     {
         internal string Folder;
         private List<string> _folders;
