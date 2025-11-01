@@ -13,9 +13,9 @@
 
         <!-- Left Panel: Drive Selector + Folder Tree -->
         <DockPanel Grid.Column="0">
-            <StackPanel DockPanel.Dock="Top" Margin="5">
-<!--                <Button Content="Select" Width="120" Height="30" Margin="0,0,0,5" Click="SelectFolder_Click"/> -->
-                <Button Content="Index" Width="120" Height="30" Margin="0,0,0,5" Click="IndexFolder_Click"/>
+            <StackPanel DockPanel.Dock="Top" Margin="5" Orientation="Horizontal">
+                <Button Content="Index" Width="80" Height="20" Margin="0,0,0,5" Click="IndexFolder_Click"/>
+                <Button Content="Report" Width="80" Height="20" Margin="0,0,0,5" Click="ReportFolder_Click"/>
             </StackPanel>
 
             <!-- Existing left panel content -->

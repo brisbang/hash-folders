@@ -25,7 +25,7 @@ namespace HashFolders
             });
 
             // Register your services and windows
-            serviceCollection.AddTransient<Main>();
+            serviceCollection.AddTransient<ViewFolders>();
             var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(e.Args)
                 .ConfigureLogging(logging =>
                 {
@@ -38,7 +38,7 @@ namespace HashFolders
 
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            var mainWindow = ServiceProvider.GetRequiredService<Main>();
+            var mainWindow = ServiceProvider.GetRequiredService<ViewFolders>();
             mainWindow.Show();
 
             base.OnStartup(e);

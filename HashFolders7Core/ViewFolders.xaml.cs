@@ -31,6 +31,7 @@ namespace HashFolders
         public ViewFolders()
         {
             InitializeComponent();
+            SetConfig();
             HideFileDetail();
 
             targetFilePath = HashLib7.UserSettings.RecentlyUsedFolder;
@@ -66,6 +67,32 @@ namespace HashFolders
                 new() {Label = BackupSizeLarge, MaxSize=long.MaxValue}
                 ];
 
+        }
+
+        private static void SetConfig()
+        {
+            string dataPath = System.Configuration.ConfigurationManager.AppSettings["dataPath"];
+            string connStr = System.Configuration.ConfigurationManager.AppSettings["connectionString"];
+            string debug = System.Configuration.ConfigurationManager.AppSettings["logDebug"];
+            string[] drives = System.Configuration.ConfigurationManager.AppSettings["drives"].Split(',');
+            DriveInfoList driveInfos = LoadDriveInfos(drives);
+            Config.SetParameters(App.ServiceProvider, dataPath, connStr, driveInfos, debug == "true");
+        }
+
+        private static DriveInfoList LoadDriveInfos(string[] drives)
+        {
+            DriveInfoList res = new();
+            foreach (string drive in drives)
+            {
+                try
+                {
+                    string[] parts = drive.Split('|');
+                    res.Add(new HashLib7.DriveInfo(parts[0][0], int.Parse(parts[1]), parts[2]));
+                }
+                catch { }
+            }
+            
+            return res;
         }
 
         private void FolderTree_Loaded(object sender, RoutedEventArgs e)
@@ -417,14 +444,44 @@ namespace HashFolders
             }
         }
 
+        private void ReportFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!(FolderTree.SelectedItem is FolderItem folder))
+                {
+                    MessageBox.Show("Please select a folder to report", "Report folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                int threadCount = 0;
+                while (threadCount == 0)
+                {
+                    string numThreads = InputBox.Show("This will report all files in the selected folder and its subfolders. This may take a while depending on the number of files.\n\nEnter the number of threads you wish to use.", "Index folder", HashLib7.UserSettings.ThreadCount.ToString());
+                    if (numThreads == null)
+                        return;
+                    if (!int.TryParse(numThreads, out threadCount) || threadCount <= 0)
+                        MessageBox.Show("Please enter a valid positive integer for the number of threads.", "Report folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                ReportManager reporter = new();
+                reporter.ExecuteAsync(folder.Path, threadCount);
+                ReportProcessing p = new(reporter);
+                p.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reporting folder: {ex.Message}", "Report folder", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void HandleDeleteAction()
         {
-            PathFormatted filePath; 
+            PathFormatted filePath;
             try
             {
                 filePath = FileList.SelectedItem as PathFormatted;
             }
-            catch {
+            catch
+            {
                 return;
             }
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
