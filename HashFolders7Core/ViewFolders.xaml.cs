@@ -420,10 +420,10 @@ namespace HashFolders
             const string title = "Index folder";
             try
             {
-                ThreadManager hasher = new();
+                IndexManager hasher = new();
                 if (!GetNumThreads(hasher, description, title))
                     return;
-                Processing p = new(hasher);
+                Indexing p = new(hasher);
                 p.ShowDialog();
             }
             catch (Exception ex)

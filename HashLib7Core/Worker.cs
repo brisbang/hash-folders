@@ -26,11 +26,11 @@ namespace HashLib7
     class Worker
     {
         private System.Threading.Thread _thread = null;
-        private readonly ThreadManager Parent;
+        private readonly IndexManager Parent;
         private HashAlgorithm _hashAlgorithm;
         private bool _aborted;
 
-        public Worker(ThreadManager parent)
+        public Worker(IndexManager parent)
         {
             _hashAlgorithm = new HashAlgorithm();
             Parent = parent;

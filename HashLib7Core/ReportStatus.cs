@@ -11,5 +11,7 @@ namespace HashLib7
         public DateTime timeRemaining;
         public int threadCount;
         public string outputFile;
+        public TimeSpan duration;
     }
+
 }

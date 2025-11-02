@@ -29,7 +29,7 @@ namespace HashLib7
             {
                 if (_threads == null)
                 {
-                    _threads = new();
+                    _threads = [];
                     _path = path;
                     UserSettings.RecentlyUsedFolder = path;
                     UserSettings.ReportThreadCount = numThreads;
@@ -72,7 +72,8 @@ namespace HashLib7
                 fileCount = _numFilesCounted,
                 filesProcessed = _numFilesProcessed,
                 threadCount = _numThreadsRunning,
-                state = State
+                state = State,
+                duration = new TimeSpan(DateTime.Now.Ticks - _startTime.Ticks)
             };
             if (_numFilesProcessed > 0)
             {

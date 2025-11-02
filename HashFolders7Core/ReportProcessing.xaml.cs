@@ -5,119 +5,50 @@ using System.Windows;
 namespace HashFolders
 {
     /// <summary>
-    /// Interaction logic for Window1.xaml
+    /// Interaction logic for ReportProcessing.xaml
     /// </summary>
-    public partial class ReportProcessing : Window
+    public partial class ReportProcessing : Window, IThreadScreen
     {
         private ReportManager _reporter;
-        private System.Windows.Threading.DispatcherTimer _timer;
-        private object _mutexMessage;
+        private ThreadScreenController _controller;
 
         public ReportProcessing(ReportManager reporter)
         {
             InitializeComponent();
             _reporter = reporter;
-            _mutexMessage = new();
-            _timer = new()
-            {
-                Interval = new TimeSpan(0, 0, 1)
-            };
-            _timer.Tick += Refresh;
-            _timer.IsEnabled = true;
+            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState);
         }
 
-        public void Refresh(object sender, EventArgs e)
+        public StateEnum Refresh(object sender, EventArgs e)
         {
-            try
-            { 
-                ReportStatus status = _reporter.GetStatus();
-                lbFilesOutstanding.Content = status.fileCount - status.filesProcessed;
-                lbFilesProcessed.Content = status.filesProcessed;
-                lbNumThreadsRunning.Content = status.threadCount;
-                lbDuration.Content = new DateTime((DateTime.Now - status.startTime).Ticks).ToLongTimeString();
-                if (status.state == StateEnum.Running)
-                    lbRemaining.Content = status.timeRemaining.ToLongTimeString();
-                lbState.Content = status.state.ToString();
-                lbResultFile.Content = status.outputFile;
-                switch (status.state)
-                {
-                    case StateEnum.Aborting:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        break;
-                    case StateEnum.Running:
-                        btnAbort1.IsEnabled = true;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = true;
-                        btnResume.IsEnabled = false;
-                        break;
-                    case StateEnum.Stopped:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = true;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        break;
-                    case StateEnum.Suspended:
-                        btnAbort1.IsEnabled = true;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = true;
-                        break;
-                    default:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        break;
-                }
-                if (status.state == StateEnum.Stopped)
-                    _timer.Stop();
-            }
-            catch (Exception ex)
-            {
-                lock (_mutexMessage)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-                Close();
-            }
+            ReportStatus status = _reporter.GetStatus();
+            lbFilesOutstanding.Content = status.fileCount - status.filesProcessed;
+            lbFilesProcessed.Content = status.filesProcessed;
+            lbNumThreadsRunning.Content = status.threadCount;
+            lbDuration.Content = status.duration.ToString("hh\\:mm\\:ss");
+            if (status.state == StateEnum.Running)
+                lbRemaining.Content = status.timeRemaining.ToLongTimeString();
+            lbResultFile.Content = status.outputFile;
+            return status.state;
         }
 
-        private void btnClose1_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        private void btnAbort1_Click(object sender, RoutedEventArgs e)
+        public void Abort()
         {
             _reporter.Abort();
         }
-
-        private void btnPause_Click(object sender, RoutedEventArgs e)
+        public void Pause()
         {
-            try
-            {
-                _reporter.Suspend();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
+            _reporter.Suspend();
+        }
+        public void Resume()
+        {
+            _reporter.Resume();
+        }
+        public void CloseWindow()
+        {
+            this.Close();
         }
 
-        private void btnResume_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                _reporter.Resume();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-        }
 
     }
 }
