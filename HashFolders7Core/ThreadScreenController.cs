@@ -52,6 +52,7 @@ namespace HashFolders
             };
             _timer.Tick += Refresh;
             _timer.IsEnabled = true;
+            ActivateButtonsByStatus(StateEnum.Undefined);
         }
 
         public void Refresh(object sender, EventArgs e)
@@ -60,40 +61,7 @@ namespace HashFolders
             {
                 TaskStatus status = _screen.Refresh(sender, e);
                 lbRemaining.Content = "";
-                switch (status.state)
-                {
-                    case StateEnum.Aborting:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        break;
-                    case StateEnum.Running:
-                        btnAbort1.IsEnabled = true;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = true;
-                        btnResume.IsEnabled = false;
-                        break;
-                    case StateEnum.Stopped:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = true;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        _timer.Stop();
-                        break;
-                    case StateEnum.Suspended:
-                        btnAbort1.IsEnabled = true;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = true;
-                        break;
-                    default:
-                        btnAbort1.IsEnabled = false;
-                        btnClose1.IsEnabled = false;
-                        btnPause.IsEnabled = false;
-                        btnResume.IsEnabled = false;
-                        break;
-                }
+                ActivateButtonsByStatus(status.state);
                 lbState.Content = status.state.ToString();
                 lbFilesOutstanding.Content = status.filesOutstanding;
                 lbFilesProcessed.Content = status.filesProcessed;
@@ -110,10 +78,52 @@ namespace HashFolders
             }
         }
 
+        private void ActivateButtonsByStatus(StateEnum state)
+        {
+            switch (state)
+            {
+                case StateEnum.Aborting:
+                    btnAbort1.IsEnabled = false;
+                    btnClose1.IsEnabled = false;
+                    btnPause.IsEnabled = false;
+                    btnResume.IsEnabled = false;
+                    break;
+                case StateEnum.Running:
+                    btnAbort1.IsEnabled = true;
+                    btnClose1.IsEnabled = false;
+                    btnPause.IsEnabled = true;
+                    btnResume.IsEnabled = false;
+                    break;
+                case StateEnum.Stopped:
+                    btnAbort1.IsEnabled = false;
+                    btnClose1.IsEnabled = true;
+                    btnPause.IsEnabled = false;
+                    btnResume.IsEnabled = false;
+                    _timer.Stop();
+                    break;
+                case StateEnum.Suspended:
+                    btnAbort1.IsEnabled = true;
+                    btnClose1.IsEnabled = false;
+                    btnPause.IsEnabled = false;
+                    btnResume.IsEnabled = true;
+                    break;
+                case StateEnum.Undefined:
+                    btnAbort1.IsEnabled = false;
+                    btnClose1.IsEnabled = true;
+                    btnPause.IsEnabled = false;
+                    btnResume.IsEnabled = false;
+                    break;
+                default: throw new InvalidOperationException("Undefined StateEnum");
+            }
+        }
+
         private void btnClose1_Click(object sender, RoutedEventArgs e)
         {
+            try
+            { _screen.Abort(); }
+            catch { }
             _screen.CloseWindow();
-        }
+            }
 
         private void btnAbort1_Click(object sender, RoutedEventArgs e)
         {

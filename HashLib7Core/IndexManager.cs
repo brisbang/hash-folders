@@ -37,7 +37,8 @@ namespace HashLib7
                 filesProcessed = _numFilesProcessed + _fileIndex,
                 foldersProcessed = _numFoldersProcessed + _folderIndex,
                 filesOutstanding = _files.Count - _fileIndex,
-                foldersOutstanding = _folders.Count - _folderIndex
+                foldersOutstanding = _folders.Count - _folderIndex,
+                state = State,
             };
             if (res.filesOutstanding > 0)
                 res.phase = IndexPhaseEnum.Scanning;

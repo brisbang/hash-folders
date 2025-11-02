@@ -5,7 +5,8 @@
         Running,
         Aborting,
         Suspended,
-        Stopped
+        Stopped,
+        Undefined,
     }
 
 }
