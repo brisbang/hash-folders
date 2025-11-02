@@ -69,7 +69,7 @@ namespace HashLib7
             ReportStatus res = new()
             {
                 startTime = _startTime,
-                fileCount = _numFilesCounted,
+                filesOutstanding = _numFilesCounted - _numFilesProcessed,
                 filesProcessed = _numFilesProcessed,
                 threadCount = _numThreadsRunning,
                 state = State,

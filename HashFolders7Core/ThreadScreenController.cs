@@ -14,13 +14,23 @@ namespace HashFolders
         private System.Windows.Controls.Button btnPause;
         private System.Windows.Controls.Button btnResume;
         private System.Windows.Controls.Label lbState;
+        private System.Windows.Controls.Label lbRemaining;
+        private System.Windows.Controls.Label lbFilesOutstanding;
+        private System.Windows.Controls.Label lbFilesProcessed;
+        private System.Windows.Controls.Label lbNumThreadsRunning;
+        private System.Windows.Controls.Label lbDuration;
 
-        public ThreadScreenController(IThreadScreen screen, 
+        public ThreadScreenController(IThreadScreen screen,
             System.Windows.Controls.Button btnAbort1,
             System.Windows.Controls.Button btnClose1,
             System.Windows.Controls.Button btnPause,
             System.Windows.Controls.Button btnResume,
-            System.Windows.Controls.Label lbState)
+            System.Windows.Controls.Label lbState,
+            System.Windows.Controls.Label lbRemaining,
+            System.Windows.Controls.Label lbFilesOutstanding,
+            System.Windows.Controls.Label lbFilesProcessed,
+            System.Windows.Controls.Label lbNumThreadsRunning,
+            System.Windows.Controls.Label lbDuration)
         {
             _mutexMessage = new();
             _screen = screen;
@@ -29,6 +39,11 @@ namespace HashFolders
             this.btnPause = btnPause; this.btnPause.Click += btnPause_Click;
             this.btnResume = btnResume; this.btnResume.Click += btnResume_Click;
             this.lbState = lbState;
+            this.lbRemaining = lbRemaining;
+            this.lbFilesOutstanding = lbFilesOutstanding;
+            this.lbFilesProcessed = lbFilesProcessed;
+            this.lbNumThreadsRunning = lbNumThreadsRunning;
+            this.lbDuration = lbDuration;
             _mutexMessage = new();
             _screen = screen;
             _timer = new()
@@ -43,8 +58,9 @@ namespace HashFolders
         {
             try
             {
-                StateEnum state = _screen.Refresh(sender, e);
-                switch (state)
+                TaskStatus status = _screen.Refresh(sender, e);
+                lbRemaining.Content = "";
+                switch (status.state)
                 {
                     case StateEnum.Aborting:
                         btnAbort1.IsEnabled = false;
@@ -78,7 +94,11 @@ namespace HashFolders
                         btnResume.IsEnabled = false;
                         break;
                 }
-                lbState.Content = state.ToString();
+                lbState.Content = status.state.ToString();
+                lbFilesOutstanding.Content = status.filesOutstanding;
+                lbFilesProcessed.Content = status.filesProcessed;
+                lbNumThreadsRunning.Content = status.threadCount;
+                lbDuration.Content = status.duration.ToString("hh\\:mm\\:ss");
             }
             catch (Exception ex)
             {

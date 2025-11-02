@@ -2,16 +2,10 @@
 
 namespace HashLib7
 {
-    public class ReportStatus
+    public class ReportStatus : TaskStatus
     {
-        public long fileCount;
-        public long filesProcessed;
-        public StateEnum state;
-        public DateTime startTime;
-        public DateTime timeRemaining;
-        public int threadCount;
         public string outputFile;
-        public TimeSpan duration;
+        public DateTime timeRemaining;
     }
 
 }

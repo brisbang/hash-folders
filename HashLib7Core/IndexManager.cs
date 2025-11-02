@@ -42,7 +42,10 @@ namespace HashLib7
             if (res.filesOutstanding > 0)
                 res.phase = IndexPhaseEnum.Scanning;
             else if (res.filesToDelete > 0)
+            {
                 res.phase = IndexPhaseEnum.Cleaning;
+                res.filesOutstanding = res.filesToDelete;
+            }
             else
                 res.phase = IndexPhaseEnum.Done;
             return res;

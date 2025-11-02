@@ -16,20 +16,18 @@ namespace HashFolders
         {
             InitializeComponent();
             _reporter = reporter;
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState);
+            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration);
         }
 
-        public StateEnum Refresh(object sender, EventArgs e)
+        public TaskStatus Refresh(object sender, EventArgs e)
         {
             ReportStatus status = _reporter.GetStatus();
-            lbFilesOutstanding.Content = status.fileCount - status.filesProcessed;
-            lbFilesProcessed.Content = status.filesProcessed;
-            lbNumThreadsRunning.Content = status.threadCount;
-            lbDuration.Content = status.duration.ToString("hh\\:mm\\:ss");
+            lbResultFile.Content = status.outputFile;
             if (status.state == StateEnum.Running)
                 lbRemaining.Content = status.timeRemaining.ToLongTimeString();
-            lbResultFile.Content = status.outputFile;
-            return status.state;
+            else
+                lbRemaining.Content = "";
+            return status;
         }
 
         public void Abort()

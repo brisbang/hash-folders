@@ -16,22 +16,16 @@ namespace HashFolders
         {
             InitializeComponent();
             _hasher = Hasher;
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState);
+            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration);
         }
 
-        public StateEnum Refresh(object sender, EventArgs e)
+        public TaskStatus Refresh(object sender, EventArgs e)
         {
             IndexStatus status = _hasher.GetStatistics();
-            if (status.filesOutstanding > 0)
-                lbFilesOutstanding.Content = status.filesOutstanding;
-            else
-                lbFilesOutstanding.Content = status.filesToDelete;
-            lbFilesProcessed.Content = status.filesProcessed;
             lbFoldersOutstanding.Content = status.foldersOutstanding;
             lbFoldersProcessed.Content = status.foldersProcessed;
-            lbNumThreadsRunning.Content = status.threadCount;
-            lbDuration.Content = status.duration.ToString("hh\\:mm\\:ss");
-            return _hasher.State;
+
+            return status;
         }
         public void Abort()
         {
