@@ -40,7 +40,8 @@ namespace HashLib7
         {
             if (LogDebug)
             {
-                string output = String.Format("[{0}]:{1}\r\n", System.Threading.Thread.CurrentThread.ManagedThreadId, text);
+                string output = String.Format("[{0} / [{1}]:{2}\r\n", System.DateTime.Now.ToString(), System.Threading.Thread.CurrentThread.ManagedThreadId, text);
+                Console.WriteLine(output);
                 _logger.LogDebug(output);
             }
         }

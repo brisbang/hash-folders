@@ -9,16 +9,9 @@ namespace HashLib7
         const string RUFKey = "SearchFolder";
         const string ITCKey = "IndexThreadCount";
         const string ODUKey = "OneDriveUser";
-        const string RTCKey = "ReportThreadCount";
         public static string RecentlyUsedFolder {
             get { return GetKey(RUFKey); }
             set { SetKey(RUFKey, value); }
-        }
-
-        public static int ReportThreadCount
-        {
-            get { return GetIntKey(RTCKey, 5); }
-            set { SetKey(RTCKey, value.ToString()); }
         }
 
         public static int ThreadCount

@@ -449,6 +449,7 @@ namespace HashFolders
                 if (!int.TryParse(numThreads, out threadCount) || threadCount <= 0)
                     MessageBox.Show("Please enter a valid positive integer for the number of threads.", title, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+            HashLib7.UserSettings.ThreadCount = threadCount;
             threadManager.ExecuteAsync(folder.Path, threadCount);
             return true;
         }

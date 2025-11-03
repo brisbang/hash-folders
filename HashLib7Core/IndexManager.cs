@@ -10,7 +10,7 @@ namespace HashLib7
         private int _folderIndex;
         private List<string> _files;
         private int _fileIndex;
-        private List<Worker> _threads;
+        private List<IndexWorker> _threads;
         private DateTime _startTime;
         private int _numThreadsRunning;
         private object _fileMutex;
@@ -65,8 +65,6 @@ namespace HashLib7
         {
             Folder = folder;
             _startTime = DateTime.Now;
-            UserSettings.RecentlyUsedFolder = folder;
-            UserSettings.ThreadCount = numThreads;
 
             if (String.IsNullOrEmpty(Folder)) throw new InvalidOperationException("Folder not specified");
 
@@ -80,7 +78,7 @@ namespace HashLib7
                 _numThreads = numThreads;
                 _previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(Folder);
 
-                Worker first = new(this);
+                IndexWorker first = new(this);
                 _threads.Add(first);
                 first.ScanFolder(Folder);
                 Config.LogDebugging("State: Running");
@@ -100,7 +98,7 @@ namespace HashLib7
         {
             if (State == StateEnum.Running)
             {
-                Worker w = new(this);
+                IndexWorker w = new(this);
                 _threads.Add(w);
                 w.ExecuteAsync();
             }
@@ -187,25 +185,29 @@ namespace HashLib7
         /// </summary>
         private void Finalise()
         {
-            if (State == StateEnum.Running && (_numThreadsRunning == 0))
+            if (State != StateEnum.Running || (_numThreadsRunning > 0))
+                return;
+            DereferenceMissingFiles();
+            Config.LogDebugging("State: Stopped");
+            State = StateEnum.Stopped;
+        }
+
+        private void DereferenceMissingFiles()
+        {
+            while (_previouslyRecordedFiles.Keys.Count > 0)
             {
-                while (_previouslyRecordedFiles.Keys.Count > 0)
+                string f = _previouslyRecordedFiles.Values[0];
+                try
                 {
-                    string f = _previouslyRecordedFiles.Values[0];
-                    try
-                    {
-                        PathFormatted pf = new(f);
-                        Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
-                        Config.GetDatabase().DeleteFile(pf);
-                    }
-                    catch (Exception ex)
-                    {
-                        Config.WriteException(f, ex);
-                    }
-                    _previouslyRecordedFiles.RemoveAt(0);
+                    PathFormatted pf = new(f);
+                    Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
+                    Config.GetDatabase().DeleteFile(pf);
                 }
-                Config.LogDebugging("State: Stopped");
-                State = StateEnum.Stopped;
+                catch (Exception ex)
+                {
+                    Config.WriteException(f, ex);
+                }
+                _previouslyRecordedFiles.RemoveAt(0);
             }
         }
 
@@ -242,8 +244,6 @@ namespace HashLib7
             Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;
         }
-
-//        public Credentials Credentials { get { return _credentials; } }
 
     }
 }

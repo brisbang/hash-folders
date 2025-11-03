@@ -1,26 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Graph.Groups.Item.Team.Channels.Item.FilesFolder;
 
 namespace HashLib7
 {
+    public enum ReportTaskEnum
+    {
+        rteGetFiles,
+        rteProcessFile,
+        rteWaitingForFiles,
+        rteNoMoreFiles,
+    }
     public class ReportManager : IAsyncManager
     {
-        private List<System.Threading.Thread> _threads;
+        private List<ReportWorker> _threads;
         private string _path;
         private string _outputFile;
         private long _numFilesProcessed;
         private long _numFilesCounted;
         private DateTime _startTime;
         private int _numThreadsRunning;
+        private bool _gettingFiles;
         private Queue<FileInfo> _files;
         public StateEnum State { get; private set; }
         private static object _mutex = new();
-        private static object _mutexList = new();
-        private static object _mutexProcessed = new();
         private static object _mutexFile = new();
+        private static object _threadMutex = new();
+        private bool _headerWritten;
         public ReportManager()
         {
             State = StateEnum.Stopped;
+            _headerWritten = false;
         }
 
         public void ExecuteAsync(string path, int numThreads)
@@ -31,15 +42,14 @@ namespace HashLib7
                 {
                     _threads = [];
                     _path = path;
-                    UserSettings.RecentlyUsedFolder = path;
-                    UserSettings.ReportThreadCount = numThreads;
+                    _gettingFiles = false;
                     _startTime = DateTime.Now;
                     _outputFile = String.Format("{0}\\Report-{1}.csv", Config.DataPath, _startTime.ToString("yyyy-MM-dd-HHmmss"));
                     State = StateEnum.Running;
                     for (int i = 0; i < numThreads; i++)
                     {
-                        System.Threading.Thread thread = new(new System.Threading.ThreadStart(this.ExecuteInternal));
-                        thread.Start();
+                        ReportWorker thread = new(this);
+                        thread.ExecuteAsync();
                         _threads.Add(thread);
                     }
                 }
@@ -79,102 +89,94 @@ namespace HashLib7
             {
                 if (this.State == StateEnum.Running || this.State == StateEnum.Suspended)
                 {
-                    res.timeRemaining = res.startTime.AddTicks((long)((double)_numFilesCounted * (DateTime.Now.Ticks - res.startTime.Ticks) / _numFilesProcessed));
+                    res.timeRemaining = DateTime.MinValue.AddTicks((long)((double)_numFilesCounted * (DateTime.Now.Ticks - res.startTime.Ticks) / _numFilesProcessed));
                 }
             }
             res.outputFile = _outputFile;
             return res;
         }
 
-        private void ExecuteInternal()
+        internal void ThreadIsStarted()
         {
-            _numThreadsRunning++;
-            Database d = Config.GetDatabase();
-            PathFormatted p = new(_path);
-            if (_files == null)
+            lock (_threadMutex)
             {
-                lock (_mutexList)
-                {
-                    if (_files == null)
-                    {
-                        _files = d.GetFilesByPath(_path);
-                        _numFilesCounted = _files.Count;
-                        LogLine(ReportHeader());
-                    }
-                }
+                ++_numThreadsRunning;
             }
-            try
-            {
-                while (_files.Count > 0)
-                {
-                    ExtractAndProcessLine(d);
-                    switch (this.State)
-                    {
-                        case StateEnum.Stopped: return; //Weird
-                        case StateEnum.Aborting: return;
-                        case StateEnum.Suspended:
-                            while (this.State == StateEnum.Suspended)
-                                System.Threading.Thread.Sleep(500);
-                            break;
-                        case StateEnum.Running:
-                            break;
-                    }
-                }
-            }
-            finally {
-                _numThreadsRunning--;
-                if (_numThreadsRunning == 0) 
-                    this.State = StateEnum.Stopped;
-            }
-         }
+        }
 
-        private void LogLine(string line)
+        internal void ThreadIsFinished()
+        {
+            lock (_threadMutex)
+            {
+                --_numThreadsRunning;
+                Finalise();
+            }
+        }
+
+        private void Finalise()
+        {
+            if (_numThreadsRunning > 0)
+                return;
+            Config.LogDebugging("State: Stopped");
+            State = StateEnum.Stopped;
+        }
+
+        internal void LogLine(string line, bool reportFileProcessed)
         {
             lock (_mutexFile)
             {
                 using System.IO.FileStream outputFileStream = System.IO.File.Open(_outputFile, System.IO.FileMode.Append);
                 byte[] outputBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(line);
                 outputFileStream.Write(outputBytes, 0, outputBytes.Length);
+                Config.LogDebugging("Processed file");
+                if (reportFileProcessed)
+                   _numFilesProcessed++;
             }
         }
 
-        private FileInfo ExtractAndProcessLine(Database d)
+        internal ReportTaskEnum GetNextTask(out FileInfo file)
         {
-            FileInfo file;
-            lock (_mutexList)
+            file = null;
+            lock (_mutexFile)
             {
-                file = null;
-                if (_files.Count > 0)
-                    file = _files.Dequeue();
-            }
-            if (file != null)
-            {
-                ReportFile(d, file);
-                lock (_mutexProcessed)
+                if (_files == null)
                 {
-                    _numFilesProcessed++;
+                    if (_gettingFiles)
+                        return ReportTaskEnum.rteWaitingForFiles;
+                    _gettingFiles = true;
+                    return ReportTaskEnum.rteGetFiles;
+                }
+                if (_files.Count == 0)
+                    return ReportTaskEnum.rteNoMoreFiles;
+                file = _files.Dequeue();
+                return ReportTaskEnum.rteProcessFile;
+            }
+        }
+
+        internal void SetFiles(Queue<FileInfo> files)
+        {
+            lock (_mutexFile)
+            {
+                _files = files;
+                _numFilesCounted = _files.Count;
+                Config.LogDebugging("Found " + _numFilesCounted + " file(s)");
+                _gettingFiles = false;
+            }
+        }
+
+        internal void TryWriteHeader()
+        {
+            if (!_headerWritten)
+            {
+                lock (_mutexFile)
+                {
+                    if (!_headerWritten)
+                    {
+                        LogLine(ReportHeader(), false);
+                        _headerWritten = true;
+                    }
                 }
             }
-
-            return file;
-        }
-
-        private void ReportFile(Database d, FileInfo file)
-        {
-            ReportRow rr = new()
-            {
-                hash = file.hash,
-                filePath = file.filePath,
-                size = file.size
-            };
-            FileLocations locations = new(file.filePath);
-            if (file.size > 0)
-            {
-                List<PathFormatted> matchingFiles = d.GetFilesByHash(file.hash);
-                foreach (PathFormatted match in matchingFiles)
-                    locations.AddDuplicate(match);
-            }
-            LogLine(ReportRowToString(locations, rr));
         }
 
         private static string ReportHeader()
@@ -183,31 +185,7 @@ namespace HashLib7
             return res;
         }
 
-        private string ReportRowToString(FileLocations locations, ReportRow rr)
-        {
-            List<string> localCopies = locations.Copies(LocationEnum.LocalCopy);
-            List<string> localBackups = locations.Copies(LocationEnum.LocalBackup);
-            List<string> remoteBackups = locations.Copies(LocationEnum.RemoteBackup);
-            string localCopyFirst = String.Empty;
-            string localBackupFirst = String.Empty;
-            string remoteBackupFirst = String.Empty;
-            if (localCopies.Count > 0) localCopyFirst = SafeFilename(localCopies[0]);
-            if (localBackups.Count > 0) localBackupFirst = SafeFilename(localBackups[0]);
-            if (remoteBackups.Count > 0) remoteBackupFirst = SafeFilename(remoteBackups[0]);
+        public string Path => _path;
 
-            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n", SafeFilename(rr.filePath), rr.hash, rr.size.ToString(), 
-               localCopies.Count.ToString(),
-               localBackups.Count.ToString(),
-               remoteBackups.Count.ToString(),
-               localCopyFirst,
-               localBackupFirst,
-               remoteBackupFirst);
-            return res;
-        }
-
-        private static string SafeFilename(string filename)
-        {
-            return filename.Replace(',', '|');
-        }
     }
 }
