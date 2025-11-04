@@ -432,7 +432,7 @@ namespace HashFolders
             }
         }
 
-        private bool GetNumThreads(IAsyncManager threadManager, string description, string title)
+        private bool GetNumThreads(AsyncManager threadManager, string description, string title)
         {
             ArgumentNullException.ThrowIfNull(threadManager);
             if (FolderTree.SelectedItem is not FolderItem folder)

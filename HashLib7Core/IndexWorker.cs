@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace HashLib7
 {
@@ -23,110 +24,56 @@ namespace HashLib7
     /// * Scans a folder and expands the backlog of files (and further folders); or
     /// * Retrieves a file request, extracts information from the database, decides if it is out of date (or missing), and updates the data on record (if required).
     /// </summary>
-    class IndexWorker : IWorker
+    internal class IndexWorker(AsyncManager parent) : Worker(parent)
     {
-        private System.Threading.Thread _thread = null;
-        private readonly IndexManager Parent;
-        private HashAlgorithm _hashAlgorithm;
-        private bool _aborted;
+        private HashAlgorithm _hashAlgorithm = new();
 
-        public IndexWorker(IndexManager parent)
+        protected override void Execute()
         {
-            _hashAlgorithm = new HashAlgorithm();
-            Parent = parent;
-            _thread = new System.Threading.Thread(Execute);
-        }
-
-        public void ExecuteAsync()
-        {
-            _thread.Start();
-        }
-
-        private void Execute()
-        {
+            const int pauseMs = 500;
             try
             {
-                const int sleepMs = 100;
-                Parent.ThreadIsStarted();
-                _aborted = false;
-                Config.LogDebugging("Worker starting");
-                ThreadLoop(sleepMs, out string folder, out string file);
-                Config.LogDebugging("Worker ending");
-            }
-            catch (System.Threading.ThreadAbortException) { }
-            catch (Exception ex)
-            {
-                Config.WriteException(null, ex);
-            }
-            finally
-            {
-                Config.LogDebugging("Finalising");
-                Parent.ThreadIsFinished();
-            }
-        }
-
-        private void ThreadLoop(int sleepMs, out string folder, out string file)
-        {
-            Config.LogDebugging("Starting ThreadLoop");
-            while (Parent.GetNextTask(out folder, out file) && !_aborted)
-            {
-                int attemptNo = 0;
-                bool success = false;
-                while (!success && !_aborted)
+                IndexManager indexParent = (IndexManager)Parent;
+                bool finished = false;
+                while (!finished && ShouldProcessNextTask())
                 {
-                    success = ExecuteTask(sleepMs, folder, file, attemptNo);
-                    if (!success && !_aborted)
+                    Task task = indexParent.GetNextTask();
+                    switch (task.status)
                     {
-                        attemptNo++;
-                        Config.LogDebugging(String.Format("Pausing at attempt: {0}", attemptNo));
-                        //In a fatal error - let's try again after a brief pause.
-                        System.Threading.Thread.Sleep(500);
+                        case TaskStatusEnum.tseProcess:
+                            if (task.nextFile != null)
+                                HashFile(task.nextFile.filePath);
+                            else
+                                ScanFolder(task.nextFolder);
+                            break;
+                        case TaskStatusEnum.tseWait:
+                            System.Threading.Thread.Sleep(pauseMs);
+                            break;
+                        case TaskStatusEnum.tseFinished:
+                            finished = true;
+                            break;
+                        default: throw new InvalidOperationException("Unknown TaskStatusEnum " + task.ToString());
                     }
+
                 }
             }
+            catch
+            { }
         }
 
-        private bool ExecuteTask(int sleepMs, string folder, string file, int attemptNo)
-        {
-            const int maxAttempts = 10;
-            try
-            {
-                ExecuteTaskInternal(sleepMs, folder, file);
-                return true;
-            }
-            catch (System.Threading.ThreadAbortException) { throw; }
-            catch (Exception ex)
-            {
-                if (attemptNo == maxAttempts)
-                {
-                    if (folder != null)
-                        Config.WriteException(folder, ex);
-                    else
-                        Config.WriteException(file, ex);
-                    //Give up
-                    return true;
-                }
-                else
-                    //Signal a retry
-                    return false;
-            }
-        }
-
-        private void ExecuteTaskInternal(int sleepMs, string folder, string file)
-        {
-            if (folder != null)
-                ScanFolder(folder);
-            else // (file != null)
-                HashFile(file);
-        }
 
         public void ScanFolder(string folder)
         {
             if (Config.LogDebug)
                 Config.LogDebugging(String.Format("Scanning: {0}", folder));
-            string[] files = Io.GetFiles(folder);
-            string[] folders = Io.GetFolders(folder);
-            Parent.AddFiles(folders, files);
+            string[] fileList = Io.GetFiles(folder);
+            List<FileInfo> files = [];
+            //Could be inefficient
+            foreach (string file in fileList)
+                files.Add(new FileInfo(file));
+            List<string> folders = [];
+            folders.AddRange(Io.GetFolders(folder));
+            ((IndexManager) Parent).FolderScanned(folder, folders, files);
         }
 
         private void HashFile(string file)
@@ -138,6 +85,7 @@ namespace HashLib7
             Config.LogDebugging(String.Format("Hashing: {0}", file));
             fh.Compute(_hashAlgorithm);
             Config.GetDatabase().WriteHash(fh, match == RecordMatch.NoRecord);
+            Parent.FileScanned(file);
         }
 
         /// <summary>
@@ -158,24 +106,6 @@ namespace HashLib7
             if (fh.Length != recorded.Length)
                 return RecordMatch.NoMatch;
             return RecordMatch.Match;
-        }
-
-        public void Abort()
-        {
-            //Nowadays you have to farm the task off to a process to abort it safely. I'm not re-engineering for that.
-            _aborted = true;
-        }
-
-        public void Join()
-        {
-            try
-            {
-                if (_thread.ThreadState != System.Threading.ThreadState.Stopped)
-                {
-                    _thread.Join();
-                }
-            }
-            catch { }
         }
     }
 }

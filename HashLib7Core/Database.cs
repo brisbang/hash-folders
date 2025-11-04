@@ -132,12 +132,12 @@ namespace HashLib7
             return SafeSql("SELECT Path, Name, Hash, Size FROM [dbo].[FileDetail] WHERE (Path LIKE '{0}%') ORDER BY Name", path);
         }
 
-        internal Queue<FileInfo> GetFilesByPath(string path)
+        internal List<FileInfo> GetFilesByPath(string path)
         {
             try
             {
                 string sql = GetFilesByPathSql(path);
-                Queue<FileInfo> res = new();
+                List<FileInfo> res = [];
                 using SqlConnection conn = new(_connectionString);
                 using SqlCommand cmd = new(sql, conn);
                 conn.Open();
@@ -150,7 +150,7 @@ namespace HashLib7
                         hash = reader[2] as string,
                         size = (long) reader[3]
                     };
-                    res.Enqueue(fi);
+                    res.Add(fi);
                 }
                 return res;
             }

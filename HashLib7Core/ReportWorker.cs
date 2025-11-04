@@ -3,46 +3,35 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    class ReportWorker : IWorker
+    class ReportWorker(AsyncManager parent) : Worker(parent)
     {
-        private System.Threading.Thread _thread = null;
-        private readonly ReportManager Parent;
-
-        public ReportWorker(ReportManager parent)
+        protected override void Execute()
         {
-            Parent = parent;
-            _thread = new System.Threading.Thread(ExecuteInternal);
-        }
-        
-        public void ExecuteAsync()
-        {
-            _thread.Start();
-        }
-
-        private void ExecuteInternal()
-        {
-            Parent.ThreadIsStarted();
+            const int pauseMs = 500;
             try
             {
+                ReportManager reportParent = (ReportManager)Parent;
                 Database d = Config.GetDatabase();
-                PathFormatted p = new(Parent.Path);
-                Parent.TryWriteHeader();
+                PathFormatted p = new(reportParent.Path);
                 bool finished = false;
                 while (!finished && ShouldProcessNextTask())
                 {
-                    ReportTaskEnum task = Parent.GetNextTask(out FileInfo file);
-                    switch (task)
+                    Task task = reportParent.GetNextTask();
+                    switch (task.status)
                     {
-                        case ReportTaskEnum.rteGetFiles:
-                            Parent.SetFiles(d.GetFilesByPath(Parent.Path));
+                        case TaskStatusEnum.tseProcess:
+                            if (task.nextFile != null)
+                            {
+                                ReportFile(d, task.nextFile);
+                                reportParent.FileScanned(task.nextFile.filePath);
+                            }
+                            else
+                                reportParent.FolderScanned(task.nextFolder, null, d.GetFilesByPath(task.nextFolder));
                             break;
-                        case ReportTaskEnum.rteWaitingForFiles:
-                            System.Threading.Thread.Sleep(500);
+                        case TaskStatusEnum.tseWait:
+                            System.Threading.Thread.Sleep(pauseMs);
                             break;
-                        case ReportTaskEnum.rteProcessFile:
-                            ReportFile(d, file);
-                            break;
-                        case ReportTaskEnum.rteNoMoreFiles:
+                        case TaskStatusEnum.tseFinished:
                             finished = true;
                             break;
                         default: throw new InvalidOperationException("Unknown ReportTaskEnum " + task.ToString());
@@ -52,31 +41,11 @@ namespace HashLib7
             }
             catch
             { }
-            finally
-            {
-                Parent.ThreadIsFinished();
-            }
-        }
-
-        private bool ShouldProcessNextTask()
-        {
-            while (true)
-            {
-                switch (Parent.State)
-                {
-                    case StateEnum.Stopped: return false; //Weird
-                    case StateEnum.Aborting: return false;
-                    case StateEnum.Suspended:
-                        System.Threading.Thread.Sleep(500);
-                        break;
-                    case StateEnum.Running: return true;
-                    default: throw new Exception("Unknown Parent.State" + Parent.State.ToString());
-                }
-            }
         }
 
         private void ReportFile(Database d, FileInfo file)
         {
+            ReportManager reportParent = (ReportManager)Parent;
             ReportRow rr = new()
             {
                 hash = file.hash,
@@ -91,7 +60,7 @@ namespace HashLib7
                     locations.AddDuplicate(match);
             }
             Config.LogDebugging("Logging file " + file.filePath);
-            Parent.LogLine(ReportRowToString(locations, rr), true);
+            reportParent.LogDetail(ReportRowToString(locations, rr));
         }
 
         private static string ReportRowToString(FileLocations locations, ReportRow rr)
