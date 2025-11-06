@@ -26,7 +26,7 @@ namespace HashLib7
 
         public static System.IO.FileStream GetFileStream(string file)
         {
-            return System.IO.File.OpenRead(file);
+            return System.IO.File.Open(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite);
         }
 
     }
