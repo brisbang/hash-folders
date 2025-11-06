@@ -46,6 +46,7 @@ namespace HashLib7
             _foldersCompleted = [];
             _filesCompleted = [];
             NumThreads = numThreads;
+            StartTime = DateTime.Now;
             lock (_mutexExecute)
             {
                 if (_threads != null)
@@ -75,26 +76,34 @@ namespace HashLib7
             Task res = new();
             lock (MutexFilesFolders)
             {
-                if (FoldersToProcess.Count == 0)
-                {
-                    if (FilesToProcess.Count == 0)
-                    {
-                        if (FoldersBeingProcessed > 0)
-                            //We wait until everything is done before heading to Finalise
-                            res.status = TaskStatusEnum.tseWait;
-                        else
-                            res.status = TaskStatusEnum.tseFinished;
-                    }
-                    else
-                    {
-                        res.status = TaskStatusEnum.tseProcess;
-                        res.nextFile = GetFileToProcess();
-                    }
-                }
-                else
+                if (FoldersToProcess.Count > 0)
                 {
                     res.status = TaskStatusEnum.tseProcess;
                     res.nextFolder = GetFolderToProcess();
+                    Console.WriteLine("Processing folder");
+                }
+                else
+                {
+                    if (FilesToProcess.Count > 0)
+                    {
+                        res.status = TaskStatusEnum.tseProcess;
+                        res.nextFile = GetFileToProcess();
+                        Console.WriteLine("Processing file");
+                    }
+                    else
+                    {
+                        if (FoldersBeingProcessed > 0)
+                        {
+                            //We wait until everything is done before heading to Finalise
+                            res.status = TaskStatusEnum.tseWait;
+                            Console.WriteLine("Waiting...");
+                        }
+                        else //If only files are left, then you can stop here.
+                        {
+                            res.status = TaskStatusEnum.tseFinished;
+                            Console.WriteLine("Finished");
+                        }
+                    }
                 }
             }
             return res;
@@ -148,7 +157,6 @@ namespace HashLib7
         {
             Config.LogDebugging("State: Starting");
             State = StateEnum.Running;
-            StartTime = DateTime.Now;
             InitialiseInvoked();
         }
 
@@ -175,14 +183,23 @@ namespace HashLib7
             return res;
         }
 
-        internal void FolderScanned(string folderScanned, List<string> folders, List<FileInfo> files)
+        internal void AddFoldersAndFiles(List<string> folders, List<FileInfo> files)
+        {
+            lock (MutexFilesFolders)
+            {
+                if (folders != null)
+                    FoldersToProcess.AddRange(folders);
+                if (files != null)
+                    FilesToProcess.AddRange(files);
+                AddFilesInvoked(files);
+            }
+        }
+
+        internal void FolderScanned(string folderScanned)
         {
             lock (MutexFilesFolders)
             {
                 _foldersCompleted.Add(folderScanned);
-                FoldersToProcess.AddRange(folders);
-                FilesToProcess.AddRange(files);
-                AddFilesInvoked(files);
                 FoldersBeingProcessed--;
             }
         }

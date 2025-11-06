@@ -5,42 +5,16 @@ namespace HashLib7
 {
     class ReportWorker(AsyncManager parent) : Worker(parent)
     {
-        protected override void Execute()
-        {
-            const int pauseMs = 500;
-            try
-            {
-                ReportManager reportParent = (ReportManager)Parent;
-                Database d = Config.GetDatabase();
-                PathFormatted p = new(reportParent.Path);
-                bool finished = false;
-                while (!finished && ShouldProcessNextTask())
-                {
-                    Task task = reportParent.GetNextTask();
-                    switch (task.status)
-                    {
-                        case TaskStatusEnum.tseProcess:
-                            if (task.nextFile != null)
-                            {
-                                ReportFile(d, task.nextFile);
-                                reportParent.FileScanned(task.nextFile.filePath);
-                            }
-                            else
-                                reportParent.FolderScanned(task.nextFolder, null, d.GetFilesByPath(task.nextFolder));
-                            break;
-                        case TaskStatusEnum.tseWait:
-                            System.Threading.Thread.Sleep(pauseMs);
-                            break;
-                        case TaskStatusEnum.tseFinished:
-                            finished = true;
-                            break;
-                        default: throw new InvalidOperationException("Unknown ReportTaskEnum " + task.ToString());
-                    }
+        readonly ReportManager castParent = (ReportManager)parent;
 
-                }
-            }
-            catch
-            { }
+
+        protected override void Execute(Task task)
+        {
+            Database d = Config.GetDatabase();
+            if (task.nextFile != null)
+                ReportFile(d, task.nextFile);
+            else
+                Parent.AddFoldersAndFiles(null, d.GetFilesByPath(task.nextFolder));
         }
 
         private void ReportFile(Database d, FileInfo file)

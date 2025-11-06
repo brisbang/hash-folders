@@ -28,39 +28,13 @@ namespace HashLib7
     {
         private HashAlgorithm _hashAlgorithm = new();
 
-        protected override void Execute()
+        protected override void Execute(Task task)
         {
-            const int pauseMs = 500;
-            try
-            {
-                IndexManager indexParent = (IndexManager)Parent;
-                bool finished = false;
-                while (!finished && ShouldProcessNextTask())
-                {
-                    Task task = indexParent.GetNextTask();
-                    switch (task.status)
-                    {
-                        case TaskStatusEnum.tseProcess:
-                            if (task.nextFile != null)
-                                HashFile(task.nextFile.filePath);
-                            else
-                                ScanFolder(task.nextFolder);
-                            break;
-                        case TaskStatusEnum.tseWait:
-                            System.Threading.Thread.Sleep(pauseMs);
-                            break;
-                        case TaskStatusEnum.tseFinished:
-                            finished = true;
-                            break;
-                        default: throw new InvalidOperationException("Unknown TaskStatusEnum " + task.ToString());
-                    }
-
-                }
-            }
-            catch
-            { }
+            if (task.nextFile != null)
+                HashFile(task.nextFile.filePath);
+            else
+                ScanFolder(task.nextFolder);
         }
-
 
         public void ScanFolder(string folder)
         {
@@ -73,7 +47,7 @@ namespace HashLib7
                 files.Add(new FileInfo(file));
             List<string> folders = [];
             folders.AddRange(Io.GetFolders(folder));
-            ((IndexManager) Parent).FolderScanned(folder, folders, files);
+            Parent.AddFoldersAndFiles(folders, files);
         }
 
         private void HashFile(string file)
@@ -85,7 +59,6 @@ namespace HashLib7
             Config.LogDebugging(String.Format("Hashing: {0}", file));
             fh.Compute(_hashAlgorithm);
             Config.GetDatabase().WriteHash(fh, match == RecordMatch.NoRecord);
-            Parent.FileScanned(file);
         }
 
         /// <summary>

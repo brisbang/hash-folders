@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace HashLib7
 {
@@ -8,6 +9,7 @@ namespace HashLib7
         //All previously known files under the folder. After processing is complete, any files in this list were not found and so can be removed from the database.
         //The short is not needed and so left 0 for performance reasons
         private SortedList<string, string> previouslyRecordedFiles;
+        private object mutexRecordedFiles = new object();
 
         //GetStatistics can be out slightly due to work in progress.
         //If a thread is processing the last file then that information is not shown because the work queue is empty but NumThreadsRunning is not yet zero.
@@ -61,30 +63,37 @@ namespace HashLib7
 
         private void DereferenceMissingFiles()
         {
-            while (previouslyRecordedFiles.Keys.Count > 0)
+            //Shouldn't be necessary given external events
+            lock (mutexRecordedFiles)
             {
-                string f = previouslyRecordedFiles.Values[^1];
-                try
+                while (previouslyRecordedFiles.Keys.Count > 0)
                 {
-                    PathFormatted pf = new(f);
-                    Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
-                    Config.GetDatabase().DeleteFile(pf);
+                    string f = previouslyRecordedFiles.Values[^1];
+                    try
+                    {
+                        PathFormatted pf = new(f);
+                        Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
+                        Config.GetDatabase().DeleteFile(pf);
+                    }
+                    catch (Exception ex)
+                    {
+                        Config.WriteException(f, ex);
+                    }
+                    previouslyRecordedFiles.RemoveAt(previouslyRecordedFiles.Count - 1);
                 }
-                catch (Exception ex)
-                {
-                    Config.WriteException(f, ex);
-                }
-                previouslyRecordedFiles.RemoveAt(previouslyRecordedFiles.Count - 1);
             }
         }
 
         protected internal override void AddFilesInvoked(List<FileInfo> files)
         {
-            //Remove any files which have been found, even if we end up with an exception processing them.
-            //Unicode filenames have issues here, for example: d:\misc\Tiffany\AMEB music\7th grade\Recordings\new\Telemann Fantasy No.6 in D Minor - Jasmine Choi 최나경.mp3
-            //They aren't matched when extracting from the database.
-            foreach (FileInfo f in files)
-                previouslyRecordedFiles.Remove(f.filePath.ToUpper());
+            lock (mutexRecordedFiles)
+            {
+                //Remove any files which have been found, even if we end up with an exception processing them.
+                //Unicode filenames have issues here, for example: d:\misc\Tiffany\AMEB music\7th grade\Recordings\new\Telemann Fantasy No.6 in D Minor - Jasmine Choi 최나경.mp3
+                //They aren't matched when extracting from the database.
+                foreach (FileInfo f in files)
+                    previouslyRecordedFiles.Remove(f.filePath.ToUpper());
+            }
         }
     }
 }
