@@ -8,8 +8,8 @@ namespace HashLib7
     {
         //All previously known files under the folder. After processing is complete, any files in this list were not found and so can be removed from the database.
         //The short is not needed and so left 0 for performance reasons
-        private SortedList<string, string> previouslyRecordedFiles;
-        private object mutexRecordedFiles = new object();
+        private SortedList<string, string> previouslyRecordedFiles = [];
+        private readonly object mutexRecordedFiles = new();
 
         //GetStatistics can be out slightly due to work in progress.
         //If a thread is processing the last file then that information is not shown because the work queue is empty but NumThreadsRunning is not yet zero.
@@ -66,6 +66,7 @@ namespace HashLib7
             //Shouldn't be necessary given external events
             lock (mutexRecordedFiles)
             {
+                Config.LogInfo("Removing " + previouslyRecordedFiles.Count + " stale entries");
                 while (previouslyRecordedFiles.Keys.Count > 0)
                 {
                     string f = previouslyRecordedFiles.Values[^1];

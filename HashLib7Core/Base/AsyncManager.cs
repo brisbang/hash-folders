@@ -80,7 +80,7 @@ namespace HashLib7
                 {
                     res.status = TaskStatusEnum.tseProcess;
                     res.nextFolder = GetFolderToProcess();
-                    Console.WriteLine("Processing folder");
+                    Config.LogDebugging("Processing folder");
                 }
                 else
                 {
@@ -88,7 +88,7 @@ namespace HashLib7
                     {
                         res.status = TaskStatusEnum.tseProcess;
                         res.nextFile = GetFileToProcess();
-                        Console.WriteLine("Processing file");
+                        Config.LogDebugging("Processing file");
                     }
                     else
                     {
@@ -96,12 +96,12 @@ namespace HashLib7
                         {
                             //We wait until everything is done before heading to Finalise
                             res.status = TaskStatusEnum.tseWait;
-                            Console.WriteLine("Waiting...");
+                            Config.LogDebugging("Waiting...");
                         }
                         else //If only files are left, then you can stop here.
                         {
                             res.status = TaskStatusEnum.tseFinished;
-                            Console.WriteLine("Finished");
+                            Config.LogDebugging("Finished");
                         }
                     }
                 }

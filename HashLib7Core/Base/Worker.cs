@@ -27,7 +27,6 @@ namespace HashLib7
                 Parent.ThreadIsStarted();
                 Main();
             }
-            catch { }
             finally
             {
                 Parent.ThreadIsFinished();
@@ -49,7 +48,14 @@ namespace HashLib7
                     switch (task.status)
                     {
                         case TaskStatusEnum.tseProcess:
-                            Execute(task);
+                            try
+                            {
+                                Execute(task);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.Error.WriteLine(ex.ToString());
+                            }
                             TaskDispose(task);
                             break;
                         case TaskStatusEnum.tseWait:

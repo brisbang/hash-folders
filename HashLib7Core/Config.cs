@@ -33,6 +33,7 @@ namespace HashLib7
         public static void LogInfo(string text)
         {
             string output = String.Format("[{0}]:{1}\r\n", System.Threading.Thread.CurrentThread.ManagedThreadId, text);
+            Console.WriteLine(output);
             _logger.LogInformation(output);
         }
 
@@ -50,6 +51,7 @@ namespace HashLib7
         {
             file ??= "<No information>";
             string output = String.Format("{0}\t{1}\r\n", file, ex.ToString());
+            Console.Error.WriteLine(output);
             _logger.LogError(output);
         }
 
