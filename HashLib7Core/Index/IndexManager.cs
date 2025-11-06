@@ -73,7 +73,7 @@ namespace HashLib7
                     try
                     {
                         PathFormatted pf = new(f);
-                        Config.LogInfo("Deleting record for " + pf.fullName + " as it is no longer found");
+                        Config.LogDebugging("Deleting record for " + pf.fullName + " as it is no longer found");
                         Config.GetDatabase().DeleteFile(pf);
                     }
                     catch (Exception ex)

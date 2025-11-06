@@ -156,7 +156,7 @@ namespace HashLib7
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
+                Config.WriteException("", ex);
                 throw;
             }
         }
@@ -172,13 +172,13 @@ namespace HashLib7
             //However this path (having the caller advise) produces less data growth
             //if (FileExists(f))
             {
-                Config.LogInfo("Creating record for " + filename);
+                Config.LogDebugging("Creating record for " + filename);
                 string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlInsert);
             }
             else
             {
-                Config.LogInfo("Updating record for " + filename);
+                Config.LogDebugging("Updating record for " + filename);
                 string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}' WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlUpdate);
             }
