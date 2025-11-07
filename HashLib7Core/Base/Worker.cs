@@ -2,12 +2,22 @@ using System;
 
 namespace HashLib7
 {
-    public abstract class Worker
+    public class Worker
     {
         private System.Threading.Thread _thread = null;
         protected readonly AsyncManager Parent;
-        protected abstract void Execute(Task task);
+        private Task task = null;
+        private bool enteredLoop = false;
 
+        private string Activity
+        {
+            get
+            {
+                if (task == null)
+                    return enteredLoop ? "Finished" : "Starting";
+                return task.ToString();
+            }
+        }
 
         public Worker(AsyncManager parent)
         {
@@ -36,80 +46,32 @@ namespace HashLib7
 
         protected void Main()
         {
-            const int pauseMs = 500;
-            Task task = null;
             try
             {
                 PathFormatted p = new(Parent.Path);
                 bool finished = false;
-                while (!finished && ShouldProcessNextTask())
+                while (!finished)
                 {
                     task = Parent.GetNextTask();
-                    switch (task.status)
+                    enteredLoop = true;
+                    if (task == null)
+                        finished = true;
+                    else
                     {
-                        case TaskStatusEnum.tseProcess:
-                            try
-                            {
-                                Execute(task);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.Error.WriteLine(ex.ToString());
-                            }
-                            TaskDispose(task);
-                            break;
-                        case TaskStatusEnum.tseWait:
-                            System.Threading.Thread.Sleep(pauseMs);
-                            break;
-                        case TaskStatusEnum.tseFinished:
-                            finished = true;
-                            break;
-                        default: throw new InvalidOperationException("Unknown ReportTaskEnum " + task.ToString());
+                        try
+                        {
+                            task.Execute();
+                        }
+                        catch (Exception ex) { Console.Error.WriteLine(ex.ToString()); }
+                        task.Dispose();
                     }
-
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.ToString());
-                TaskDispose(task);
+                task.Dispose();
             }
-        }
-
-        protected bool ShouldProcessNextTask()
-        {
-            while (true)
-            {
-                switch (Parent.State)
-                {
-                    case StateEnum.Stopped: return false; //Weird
-                    case StateEnum.Aborting: return false;
-                    case StateEnum.Suspended:
-                        System.Threading.Thread.Sleep(500);
-                        break;
-                    case StateEnum.Running: return true;
-                    default: throw new Exception("Unknown Parent.State" + Parent.State.ToString());
-                }
-            }
-        }
-
-
-        private void TaskDispose(Task task)
-        {
-            try
-            {
-                switch (task.status)
-                {
-                    case TaskStatusEnum.tseProcess:
-                        if (task.nextFile != null)
-                            Parent.FileScanned(task.nextFile.filePath);
-                        else
-                            Parent.FolderScanned(task.nextFolder);
-                        break;
-                }
-            }
-            catch { }
-
         }
     }
 }

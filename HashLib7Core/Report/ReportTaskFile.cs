@@ -3,37 +3,30 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    class ReportWorker(AsyncManager parent) : Worker(parent)
+    public class ReportTaskFile : TaskFile
     {
-        readonly ReportManager castParent = (ReportManager)parent;
-
-
-        protected override void Execute(Task task)
+        public ReportTaskFile(AsyncManager parent, FileInfo file) : base(parent, file)
         {
-            Database d = Config.GetDatabase();
-            if (task.nextFile != null)
-                ReportFile(d, task.nextFile);
-            else
-                Parent.AddFoldersAndFiles(null, d.GetFilesByPath(task.nextFolder));
-        }
 
-        private void ReportFile(Database d, FileInfo file)
+        }
+        
+        public override void Execute()
         {
             ReportManager reportParent = (ReportManager)Parent;
             ReportRow rr = new()
             {
-                hash = file.hash,
-                filePath = file.filePath,
-                size = file.size
+                hash = nextFile.hash,
+                filePath = nextFile.filePath,
+                size = nextFile.size
             };
-            FileLocations locations = new(file.filePath);
-            if (file.size > 0)
+            FileLocations locations = new(nextFile.filePath);
+            if (nextFile.size > 0)
             {
-                List<PathFormatted> matchingFiles = d.GetFilesByHash(file.hash);
+                List<PathFormatted> matchingFiles = Config.GetDatabase().GetFilesByHash(nextFile.hash);
                 foreach (PathFormatted match in matchingFiles)
                     locations.AddDuplicate(match);
             }
-            Config.LogDebugging("Logging file " + file.filePath);
+            Config.LogDebugging("Logging file " + nextFile.filePath);
             reportParent.LogDetail(ReportRowToString(locations, rr));
         }
 
@@ -62,6 +55,10 @@ namespace HashLib7
         private static string SafeFilename(string filename)
         {
             return filename.Replace(',', '|');
+        }
+        public override string ToString()
+        {
+            return "Writing: " + base.nextFile;
         }
     }
 }

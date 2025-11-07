@@ -21,7 +21,7 @@ namespace HashFolders
 
         public TaskStatus Refresh(object sender, EventArgs e)
         {
-            IndexStatus status = _hasher.GetStatistics();
+            IndexStatus status = (IndexStatus) _hasher.GetStatus();
             lbFoldersOutstanding.Content = status.foldersOutstanding;
             lbFoldersProcessed.Content = status.foldersProcessed;
 

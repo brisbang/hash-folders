@@ -21,7 +21,7 @@ namespace HashFolders
 
         public TaskStatus Refresh(object sender, EventArgs e)
         {
-            ReportStatus status = _reporter.GetStatus();
+            ReportStatus status = (ReportStatus) _reporter.GetStatus();
             lbResultFile.Content = status.outputFile;
             if (status.state == StateEnum.Running)
                 lbRemaining.Content = status.timeRemaining.ToLongTimeString();

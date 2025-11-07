@@ -5,8 +5,22 @@ namespace HashLib7
     internal class HashAlgorithm
     {
         private System.Security.Cryptography.SHA1 sha1;
+        private static readonly object _mutex = new();
+        private static HashAlgorithm _instance;
 
-        internal HashAlgorithm()
+        public static HashAlgorithm GetInstance()
+        {
+            if (_instance == null)
+            {
+                lock (_mutex)
+                {
+                    _instance ??= new HashAlgorithm();
+                }
+            }
+            return _instance;
+        }
+
+        public HashAlgorithm()
         {
             sha1 = System.Security.Cryptography.SHA1.Create();
         }

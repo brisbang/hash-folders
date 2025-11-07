@@ -40,9 +40,9 @@ namespace HashLib7
         /// Computes the hash of file specified by the FilePath. May take some time.
         /// </summary>
         /// <param name="ha"></param>
-        internal void Compute(HashAlgorithm ha)
+        internal void Compute()
         {
-            _hash = ha.HashFile(FilePath);
+            _hash = new HashAlgorithm().HashFile(FilePath);
         }
 
         public override string ToString()

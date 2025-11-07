@@ -13,7 +13,7 @@ namespace HashLib7
 
         //GetStatistics can be out slightly due to work in progress.
         //If a thread is processing the last file then that information is not shown because the work queue is empty but NumThreadsRunning is not yet zero.
-        public IndexStatus GetStatistics()
+        public override TaskStatus GetStatus()
         {
             IndexStatus res = new()
             {
@@ -43,7 +43,7 @@ namespace HashLib7
 
             List<Worker> threads = [];
             for (int i = 0; i < numThreads; i++)
-                threads.Add(new IndexWorker(this));
+                threads.Add(new Worker(this));
             return threads;
         }
 
@@ -95,6 +95,16 @@ namespace HashLib7
                 foreach (FileInfo f in files)
                     previouslyRecordedFiles.Remove(f.filePath.ToUpper());
             }
+        }
+
+        public override Task GetFolderTask(string folder)
+        {
+            return new IndexTaskFolder(this, folder);
+        }
+
+        public override Task GetFileTask(FileInfo file)
+        {
+            return new IndexTaskFile(this, file);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace HashLib7
@@ -19,45 +19,21 @@ namespace HashLib7
         NoRecord
     }
 
-    /// <summary>
-    /// Pulls a task from the ThreadManager's backlog:
-    /// * Scans a folder and expands the backlog of files (and further folders); or
-    /// * Retrieves a file request, extracts information from the database, decides if it is out of date (or missing), and updates the data on record (if required).
-    /// </summary>
-    internal class IndexWorker(AsyncManager parent) : Worker(parent)
+    public class IndexTaskFile : TaskFile
     {
-        private HashAlgorithm _hashAlgorithm = new();
-
-        protected override void Execute(Task task)
+        public IndexTaskFile(AsyncManager parent, FileInfo file) : base(parent, file)
         {
-            if (task.nextFile != null)
-                HashFile(task.nextFile.filePath);
-            else
-                ScanFolder(task.nextFolder);
+
         }
-
-        public void ScanFolder(string folder)
+        
+        public override void Execute()
         {
-            if (Config.LogDebug)
-                Config.LogDebugging(String.Format("Scanning: {0}", folder));
-            string[] fileList = Io.GetFiles(folder);
-            List<FileInfo> files = [];
-            //Could be inefficient
-            foreach (string file in fileList)
-                files.Add(new FileInfo(file));
-            List<string> folders = [];
-            folders.AddRange(Io.GetFolders(folder));
-            Parent.AddFoldersAndFiles(folders, files);
-        }
-
-        private void HashFile(string file)
-        {
-            FileHash fh = new(file);
+            FileHash fh = new(this.nextFile.filePath);
             RecordMatch match = RequiresUpdatedHash(fh);
             if (match == RecordMatch.Match)
                 return;
-            Config.LogDebugging(String.Format("Hashing: {0}", file));
-            fh.Compute(_hashAlgorithm);
+            Config.LogDebugging(String.Format("Hashing: {0}", this.nextFile.filePath));
+            fh.Compute();
             Config.GetDatabase().WriteHash(fh, match == RecordMatch.NoRecord);
         }
 
@@ -79,6 +55,10 @@ namespace HashLib7
             if (fh.Length != recorded.Length)
                 return RecordMatch.NoMatch;
             return RecordMatch.Match;
+        }
+        public override string ToString()
+        {
+            return "Indexeing: " + base.nextFile;
         }
     }
 }

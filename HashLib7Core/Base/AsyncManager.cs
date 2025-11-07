@@ -36,6 +36,10 @@ namespace HashLib7
         protected virtual void FinaliseInvoked() { }
         protected internal virtual void AddFilesInvoked(List<FileInfo> files) { }
 
+        public abstract TaskStatus GetStatus();
+        public abstract Task GetFolderTask(string folder);
+        public abstract Task GetFileTask(FileInfo file);
+
         public void ExecuteAsync(string path, int numThreads)
         {
             if (String.IsNullOrEmpty(path)) throw new InvalidOperationException("Folder not specified");
@@ -73,40 +77,44 @@ namespace HashLib7
 
         internal Task GetNextTask()
         {
-            Task res = new();
             lock (MutexFilesFolders)
             {
-                if (FoldersToProcess.Count > 0)
+                switch (this.State)
                 {
-                    res.status = TaskStatusEnum.tseProcess;
-                    res.nextFolder = GetFolderToProcess();
-                    Config.LogDebugging("Processing folder");
-                }
-                else
-                {
-                    if (FilesToProcess.Count > 0)
-                    {
-                        res.status = TaskStatusEnum.tseProcess;
-                        res.nextFile = GetFileToProcess();
-                        Config.LogDebugging("Processing file");
-                    }
-                    else
-                    {
-                        if (FoldersBeingProcessed > 0)
+                    case StateEnum.Suspended:
+                        return new TaskWait(this);
+                    case StateEnum.Aborting:
+                    case StateEnum.Stopped:
+                    case StateEnum.Undefined:
+                        return null;
+                    case StateEnum.Running:
+                        if (FoldersToProcess.Count > 0)
                         {
-                            //We wait until everything is done before heading to Finalise
-                            res.status = TaskStatusEnum.tseWait;
-                            Config.LogDebugging("Waiting...");
+                            Config.LogDebugging("Processing folder");
+                            return GetFolderToProcess();
                         }
-                        else //If only files are left, then you can stop here.
+                        else
                         {
-                            res.status = TaskStatusEnum.tseFinished;
-                            Config.LogDebugging("Finished");
+                            if (FilesToProcess.Count > 0)
+                            {
+                                Config.LogDebugging("Processing file");
+                                return GetFileToProcess();
+                            }
+                            else
+                            {
+                                if (FoldersBeingProcessed > 0)
+                                {
+                                    //We wait until everything is done before heading to Finalise
+                                    Config.LogDebugging("Waiting...");
+                                    return new TaskWait(this);
+                                }
+                                else //If only files are left, then you can stop here.
+                                    return null;
+                            }
                         }
-                    }
+                    default: throw new Exception("Unknown StateEnum!");
                 }
             }
-            return res;
         }
         
         public void Abort()
@@ -162,25 +170,26 @@ namespace HashLib7
 
         private void Finalise()
         {
-            FinaliseInvoked();
+            if (State != StateEnum.Aborting)
+                FinaliseInvoked();
             Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;
         }
 
-        protected string GetFolderToProcess()
+        protected Task GetFolderToProcess()
         {
             string res = FoldersToProcess[^1];
             FoldersToProcess.RemoveAt(FoldersToProcess.Count - 1);
             FoldersBeingProcessed++;
-            return res;
+            return GetFolderTask(res);
         }
 
-        protected internal FileInfo GetFileToProcess()
+        protected internal Task GetFileToProcess()
         {
             FileInfo res = FilesToProcess[^1];
             FilesToProcess.RemoveAt(FilesToProcess.Count - 1);
             FilesBeingProcessed++;
-            return res;
+            return GetFileTask(res);
         }
 
         internal void AddFoldersAndFiles(List<string> folders, List<FileInfo> files)
