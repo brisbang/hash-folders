@@ -3,13 +3,12 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class IndexTaskFolder : TaskFolder
+    public class IndexTaskFolder(AsyncManager parent, string folder) : TaskFolder(parent, folder)
     {
-        public IndexTaskFolder(AsyncManager parent, string folder) : base(parent, folder)
-        {
+        public override string Verb => "Scan";
 
-        }
-        
+        public override string Target => base.nextFolder;
+
         public override void Execute()
         {
             if (Config.LogDebug)

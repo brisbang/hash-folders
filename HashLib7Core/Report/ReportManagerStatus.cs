@@ -2,10 +2,9 @@
 
 namespace HashLib7
 {
-    public class ReportStatus : TaskStatus
+    public class ReportManagerStatus : ManagerStatus
     {
         public string outputFile;
-        public DateTime timeRemaining;
     }
 
 }

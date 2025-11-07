@@ -2,7 +2,7 @@ using System;
 
 namespace HashLib7
 {
-    public class IndexStatus : TaskStatus
+    public class IndexManagerStatus : ManagerStatus
     {
         public long filesToDelete;
         public long foldersProcessed;

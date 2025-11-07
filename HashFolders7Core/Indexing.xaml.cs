@@ -9,19 +9,20 @@ namespace HashFolders
     /// </summary>
     public partial class Indexing : Window, IThreadScreen
     {
-        private IndexManager _hasher;
+        private IndexManager Indexer;
         private ThreadScreenController _controller;
 
-        public Indexing(IndexManager Hasher)
+        public Indexing(IndexManager indexer)
         {
             InitializeComponent();
-            _hasher = Hasher;
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration);
+            Indexer = indexer;
+            DataContext = new WorkerStatusViewModel();
+            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
         }
 
-        public TaskStatus Refresh(object sender, EventArgs e)
+        public ManagerStatus Refresh(object sender, EventArgs e)
         {
-            IndexStatus status = (IndexStatus) _hasher.GetStatus();
+            IndexManagerStatus status = (IndexManagerStatus) Indexer.GetStatus();
             lbFoldersOutstanding.Content = status.foldersOutstanding;
             lbFoldersProcessed.Content = status.foldersProcessed;
 
@@ -29,15 +30,15 @@ namespace HashFolders
         }
         public void Abort()
         {
-            _hasher.Abort();
+            Indexer.Abort();
         }
         public void Pause()
         {
-            _hasher.Suspend();
+            Indexer.Suspend();
         }
         public void Resume()
         {
-            _hasher.Resume();
+            Indexer.Resume();
         }
         public void CloseWindow()
         {

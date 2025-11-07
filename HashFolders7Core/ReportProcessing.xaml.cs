@@ -16,17 +16,21 @@ namespace HashFolders
         {
             InitializeComponent();
             _reporter = reporter;
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration);
+            // set up a simple ViewModel for the ListView
+            DataContext = new WorkerStatusViewModel();
+            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
         }
 
-        public TaskStatus Refresh(object sender, EventArgs e)
+        public ManagerStatus Refresh(object sender, EventArgs e)
         {
-            ReportStatus status = (ReportStatus) _reporter.GetStatus();
+            ReportManagerStatus status = (ReportManagerStatus) _reporter.GetStatus();
             lbResultFile.Content = status.outputFile;
+/*
             if (status.state == StateEnum.Running)
                 lbRemaining.Content = status.timeRemaining.ToLongTimeString();
             else
                 lbRemaining.Content = "";
+                */
             return status;
         }
 

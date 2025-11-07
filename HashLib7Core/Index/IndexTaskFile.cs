@@ -19,13 +19,12 @@ namespace HashLib7
         NoRecord
     }
 
-    public class IndexTaskFile : TaskFile
+    public class IndexTaskFile(AsyncManager parent, FileInfo file) : TaskFile(parent, file)
     {
-        public IndexTaskFile(AsyncManager parent, FileInfo file) : base(parent, file)
-        {
+        public override string Verb => "Index";
 
-        }
-        
+        public override string Target => base.nextFile.filePath;
+
         public override void Execute()
         {
             FileHash fh = new(this.nextFile.filePath);
@@ -55,10 +54,6 @@ namespace HashLib7
             if (fh.Length != recorded.Length)
                 return RecordMatch.NoMatch;
             return RecordMatch.Match;
-        }
-        public override string ToString()
-        {
-            return "Indexeing: " + base.nextFile;
         }
     }
 }

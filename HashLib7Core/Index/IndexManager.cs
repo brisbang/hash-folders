@@ -13,9 +13,9 @@ namespace HashLib7
 
         //GetStatistics can be out slightly due to work in progress.
         //If a thread is processing the last file then that information is not shown because the work queue is empty but NumThreadsRunning is not yet zero.
-        public override TaskStatus GetStatus()
+        public override ManagerStatus GetStatus()
         {
-            IndexStatus res = new()
+            IndexManagerStatus res = new()
             {
                 threadCount = base.NumThreadsRunning,
                 duration = base.Duration,
@@ -25,6 +25,7 @@ namespace HashLib7
                 filesOutstanding = NumFilesOutstanding,
                 foldersOutstanding = NumFoldersOutstanding,
                 state = State,
+                workerStatuses = base.GetWorkerStatuses(),
             };
             if (res.filesOutstanding > 0)
                 res.phase = IndexPhaseEnum.Scanning;

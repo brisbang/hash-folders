@@ -6,7 +6,7 @@ namespace HashFolders
 {
     public interface IThreadScreen
     {
-        TaskStatus Refresh(object sender, EventArgs e);
+        ManagerStatus Refresh(object sender, EventArgs e);
         void Abort();
         void Pause();
         void Resume();

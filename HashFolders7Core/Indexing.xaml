@@ -5,26 +5,44 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HashFolders"
         mc:Ignorable="d"
-        Title="Indexing" Height="227.955" Width="349.324">
-    <Grid Height="196" VerticalAlignment="Top">
-        <Label Content="Folders:" HorizontalAlignment="Left" Margin="15,113,0,0" VerticalAlignment="Top"/>
-        <Label Content="Files:" HorizontalAlignment="Left" Margin="15,139,0,0" VerticalAlignment="Top"/>
-        <Label Content="Processed:" HorizontalAlignment="Left" Margin="82,87,0,0" VerticalAlignment="Top"/>
-        <Label Content="Remaining:" HorizontalAlignment="Left" Margin="193,87,0,0" VerticalAlignment="Top"/>
-        <Label Content="0" HorizontalAlignment="Left" Margin="110,113,0,0" VerticalAlignment="Top" Name="lbFoldersProcessed"/>
-        <Label Content="0" HorizontalAlignment="Left" Margin="219,139,0,0" VerticalAlignment="Top" Name="lbFilesOutstanding"/>
-        <Label Content="1" HorizontalAlignment="Left" Margin="219,113,0,0" VerticalAlignment="Top" Name="lbFoldersOutstanding"/>
-        <Label Content="0" HorizontalAlignment="Left" Margin="110,139,0,0" VerticalAlignment="Top" x:Name="lbFilesProcessed"/>
-        <Label Content="# Threads:" HorizontalAlignment="Left" Margin="193,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.503,1.798"/>
-        <Label Content="0" HorizontalAlignment="Left" Margin="288,42,0,0" VerticalAlignment="Top" x:Name="lbNumThreadsRunning"/>
-        <Label Content="Duration:" HorizontalAlignment="Left" Margin="15,163,0,0" VerticalAlignment="Top"/>
-        <Label Content="00:00" HorizontalAlignment="Left" Margin="99,163,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" Name="lbDuration"/>
-        <Button x:Name="btnAbort1" Content="Abort" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button x:Name="btnClose1" Content="Close" HorizontalAlignment="Left" Margin="250,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="1.711,0.532" IsEnabled="False"/>
-        <Button x:Name="btnPause" Content="Pause" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75"/>
-        <Button x:Name="btnResume" Content="Resume" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75"/>
-        <Label Content="State:" HorizontalAlignment="Left" Margin="13,42,0,0" VerticalAlignment="Top"/>
-        <Label Content="Running" HorizontalAlignment="Left" Margin="80,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbState" Width="66"/>
+        Title="Indexing" Height="500" Width="750">
+    <Grid Height="500" VerticalAlignment="Top">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
+        <!-- existing controls kept in the top row -->
+        <Grid Grid.Row="0" VerticalAlignment="Top">
+            <Label Content="Folders:" HorizontalAlignment="Left" Margin="15,113,0,0" VerticalAlignment="Top"/>
+            <Label Content="Files:" HorizontalAlignment="Left" Margin="15,139,0,0" VerticalAlignment="Top"/>
+            <Label Content="Processed:" HorizontalAlignment="Left" Margin="82,87,0,0" VerticalAlignment="Top"/>
+            <Label Content="Remaining:" HorizontalAlignment="Left" Margin="193,87,0,0" VerticalAlignment="Top"/>
+            <Label Content="0" HorizontalAlignment="Left" Margin="110,113,0,0" VerticalAlignment="Top" Name="lbFoldersProcessed"/>
+            <Label Content="0" HorizontalAlignment="Left" Margin="219,139,0,0" VerticalAlignment="Top" Name="lbFilesOutstanding"/>
+            <Label Content="1" HorizontalAlignment="Left" Margin="219,113,0,0" VerticalAlignment="Top" Name="lbFoldersOutstanding"/>
+            <Label Content="0" HorizontalAlignment="Left" Margin="110,139,0,0" VerticalAlignment="Top" x:Name="lbFilesProcessed"/>
+            <Label Content="# Threads:" HorizontalAlignment="Left" Margin="193,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.503,1.798"/>
+            <Label Content="0" HorizontalAlignment="Left" Margin="288,42,0,0" VerticalAlignment="Top" x:Name="lbNumThreadsRunning"/>
+            <Label Content="Duration:" HorizontalAlignment="Left" Margin="15,163,0,0" VerticalAlignment="Top"/>
+            <Label Content="00:00" HorizontalAlignment="Left" Margin="99,163,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" Name="lbDuration"/>
+            <Button x:Name="btnAbort1" Content="Abort" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75"/>
+            <Button x:Name="btnClose1" Content="Close" HorizontalAlignment="Left" Margin="250,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="1.711,0.532" IsEnabled="False"/>
+            <Button x:Name="btnPause" Content="Pause" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75"/>
+            <Button x:Name="btnResume" Content="Resume" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75"/>
+            <Label Content="State:" HorizontalAlignment="Left" Margin="13,42,0,0" VerticalAlignment="Top"/>
+            <Label Content="Running" HorizontalAlignment="Left" Margin="80,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbState" Width="66"/>
+        </Grid>
+        <Grid Grid.Row="1" VerticalAlignment="Top">
+            <!-- new ListView in the bottom row -->
+            <ListView ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Margin="8">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Action" DisplayMemberBinding="{Binding Action}" Width="220"/>
+                        <GridViewColumn Header="Target" DisplayMemberBinding="{Binding Target}" Width="400"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
     </Grid>
 </Window>

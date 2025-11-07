@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class TaskStatus
+    public class ManagerStatus
     {
         public StateEnum state;
         public long filesProcessed;
@@ -10,5 +11,6 @@ namespace HashLib7
         public int threadCount;
         public TimeSpan duration;
         public long filesOutstanding;
+        public List<WorkerStatus> workerStatuses;
     }
 }

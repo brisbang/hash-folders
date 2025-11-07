@@ -37,10 +37,23 @@ namespace HashLib7
         protected virtual Task GetFinalTask() { return null;  }
         protected internal virtual void AddFilesInvoked(List<FileInfo> files) { }
 
-        public abstract TaskStatus GetStatus();
+        public abstract ManagerStatus GetStatus();
         public abstract Task GetFolderTask(string folder);
         public abstract Task GetFileTask(FileInfo file);
 
+        protected List<WorkerStatus> GetWorkerStatuses()
+        {
+            List<WorkerStatus> res = [];
+            lock (_mutexThread)
+            {
+                foreach (Worker w in _threads)
+                {
+                    res.Add(w.Status);
+                }
+            }
+            return res;
+        }
+        
         public void ExecuteAsync(string path, int numThreads)
         {
             if (String.IsNullOrEmpty(path)) throw new InvalidOperationException("Folder not specified");

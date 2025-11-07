@@ -9,13 +9,13 @@ namespace HashLib7
         private Task task = null;
         private bool enteredLoop = false;
 
-        private string Activity
+        internal WorkerStatus Status
         {
             get
             {
                 if (task == null)
-                    return enteredLoop ? "Finished" : "Starting";
-                return task.ToString();
+                    return new WorkerStatus(enteredLoop ? "Finished" : "Starting");
+                return new WorkerStatus(task.Verb, task.Target);
             }
         }
 

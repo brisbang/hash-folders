@@ -3,15 +3,25 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class IndexDereferenceTask : Task
+    public class IndexDereferenceTask(AsyncManager parent, SortedList<string, string> previousFiles) : Task(parent, TaskStatusEnum.tseProcess)
     {
-        private SortedList<string, string> PreviouslyRecordedFiles;
+        private SortedList<string, string> PreviouslyRecordedFiles = previousFiles;
 
-        public IndexDereferenceTask(AsyncManager parent, SortedList<string, string> previousFiles) : base(parent, TaskStatusEnum.tseProcess)
-        {
-            PreviouslyRecordedFiles = previousFiles;
+        public override string Verb => "Remove stale";
+
+        public override string Target {
+            get
+            {
+                string res = "";
+                try
+                {
+                    res = PreviouslyRecordedFiles.Values[^1];
+                }
+                catch { }
+                return res;
+            }
         }
-        
+
         public override void Execute()
         {
             Config.LogInfo("Removing " + PreviouslyRecordedFiles.Count + " stale entries");
@@ -31,12 +41,7 @@ namespace HashLib7
                 PreviouslyRecordedFiles.RemoveAt(PreviouslyRecordedFiles.Count - 1);
             }
          }
-        
-        public override string ToString()
-        {
-            return "Remove " + PreviouslyRecordedFiles.Count + " stale entries";
-        }
-        
+                
         public override void RegisterCompleted()
         {
             

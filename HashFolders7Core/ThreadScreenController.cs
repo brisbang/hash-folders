@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using HashLib7;
 
@@ -19,6 +21,7 @@ namespace HashFolders
         private System.Windows.Controls.Label lbFilesProcessed;
         private System.Windows.Controls.Label lbNumThreadsRunning;
         private System.Windows.Controls.Label lbDuration;
+        private WorkerStatusViewModel ReportViewModel;
 
         public ThreadScreenController(IThreadScreen screen,
             System.Windows.Controls.Button btnAbort1,
@@ -30,10 +33,12 @@ namespace HashFolders
             System.Windows.Controls.Label lbFilesOutstanding,
             System.Windows.Controls.Label lbFilesProcessed,
             System.Windows.Controls.Label lbNumThreadsRunning,
-            System.Windows.Controls.Label lbDuration)
+            System.Windows.Controls.Label lbDuration,
+            WorkerStatusViewModel wsvm)
         {
             _mutexMessage = new();
             _screen = screen;
+            ((Window)_screen).Closing += OnClosing;
             this.btnAbort1 = btnAbort1; this.btnAbort1.Click += btnAbort1_Click;
             this.btnClose1 = btnClose1; this.btnClose1.Click += btnClose1_Click;
             this.btnPause = btnPause; this.btnPause.Click += btnPause_Click;
@@ -44,6 +49,7 @@ namespace HashFolders
             this.lbFilesProcessed = lbFilesProcessed;
             this.lbNumThreadsRunning = lbNumThreadsRunning;
             this.lbDuration = lbDuration;
+            this.ReportViewModel = wsvm;
             _mutexMessage = new();
             _screen = screen;
             _timer = new()
@@ -55,11 +61,21 @@ namespace HashFolders
             ActivateButtonsByStatus(StateEnum.Undefined);
         }
 
+        private void OnClosing(object sender, CancelEventArgs e)
+        {
+            //Try to end it in case it's still running.
+            try
+            {
+                _screen.Abort();
+            }
+            catch { }
+        }
+
         public void Refresh(object sender, EventArgs e)
         {
             try
             {
-                TaskStatus status = _screen.Refresh(sender, e);
+                ManagerStatus status = _screen.Refresh(sender, e);
                 lbRemaining.Content = "";
                 ActivateButtonsByStatus(status.state);
                 lbState.Content = status.state.ToString();
@@ -67,6 +83,7 @@ namespace HashFolders
                 lbFilesProcessed.Content = status.filesProcessed;
                 lbNumThreadsRunning.Content = status.threadCount;
                 lbDuration.Content = status.duration.ToString("hh\\:mm\\:ss");
+                ShowWorkerStatuses(ReportViewModel, status.workerStatuses);
             }
             catch (Exception ex)
             {
@@ -76,6 +93,31 @@ namespace HashFolders
                 }
                 _screen.CloseWindow();
             }
+        }
+
+        private void ShowWorkerStatuses(WorkerStatusViewModel wsvm, List<WorkerStatus> workerStatuses)
+        {
+            int rowIndex = 0;
+            foreach (WorkerStatus ws in workerStatuses)
+            {
+                RowItem row;
+                bool isNew = false;
+                if (rowIndex < wsvm.Rows.Count)
+                    row = wsvm.Rows[rowIndex];
+                else
+                {
+                    row = new();
+                    isNew = true;
+                }
+                row.Action = ws.Action;
+                row.Target = ws.Target;
+                if (isNew)
+                    wsvm.Rows.Add(row);
+                rowIndex++;
+            }
+            while (wsvm.Rows.Count > rowIndex)
+                wsvm.Rows.RemoveAt(wsvm.Rows.Count - 1);
+            
         }
 
         private void ActivateButtonsByStatus(StateEnum state)

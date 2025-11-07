@@ -28,9 +28,9 @@ namespace HashLib7
             return new ReportTaskFolder(this, folder);
         }
 
-        public override TaskStatus GetStatus()
+        public override ManagerStatus GetStatus()
         {
-            ReportStatus res = new()
+            ReportManagerStatus res = new()
             {
                 startTime = StartTime,
                 threadCount = NumThreadsRunning,
@@ -39,6 +39,7 @@ namespace HashLib7
                 outputFile = _outputFile,
                 filesOutstanding = NumFilesOutstanding,
                 filesProcessed = NumFilesProcessed,
+                workerStatuses = base.GetWorkerStatuses(),
             };
             return res;
         }
