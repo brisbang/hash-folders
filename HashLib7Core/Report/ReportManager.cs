@@ -43,9 +43,9 @@ namespace HashLib7
             return res;
         }
 
-        protected override void InitialiseInvoked()
+        protected override Task GetInitialTask()
         {
-            LogLine(ReportHeader());
+            return new ReportHeaderTask(this);
         }
 
         internal void LogDetail(string line)
@@ -62,11 +62,5 @@ namespace HashLib7
                 outputFileStream.Write(outputBytes, 0, outputBytes.Length);
             }
         }
-        private static string ReportHeader()
-        {
-            string res = "Filename,Hash,Size,Local copies,Local backups,Remote backups,Local copy 1,Local backup 1,Remote backup 1\n";
-            return res;
-        }
-
     }
 }

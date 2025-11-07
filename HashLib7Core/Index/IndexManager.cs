@@ -8,7 +8,7 @@ namespace HashLib7
     {
         //All previously known files under the folder. After processing is complete, any files in this list were not found and so can be removed from the database.
         //The short is not needed and so left 0 for performance reasons
-        private SortedList<string, string> previouslyRecordedFiles = [];
+        internal SortedList<string, string> previouslyRecordedFiles = [];
         private readonly object mutexRecordedFiles = new();
 
         //GetStatistics can be out slightly due to work in progress.
@@ -47,42 +47,18 @@ namespace HashLib7
             return threads;
         }
 
-        protected override void InitialiseInvoked()
+        protected override Task GetInitialTask()
         {
-            previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(base.FoldersToProcess[0]);
+            return new IndexGetPreviousFilesTask(this, base.FoldersToProcess[0]);
         }
 
         /// <summary>
         /// If we are concluding the final thread, then we now have a list of all hash references that no longer exist.
         /// Remove them from the database.
         /// </summary>
-        protected override void FinaliseInvoked()
+        protected override Task GetFinalTask()
         {
-            DereferenceMissingFiles();
-        }
-
-        private void DereferenceMissingFiles()
-        {
-            //Shouldn't be necessary given external events
-            lock (mutexRecordedFiles)
-            {
-                Config.LogInfo("Removing " + previouslyRecordedFiles.Count + " stale entries");
-                while (previouslyRecordedFiles.Keys.Count > 0)
-                {
-                    string f = previouslyRecordedFiles.Values[^1];
-                    try
-                    {
-                        PathFormatted pf = new(f);
-                        Config.LogDebugging("Deleting record for " + pf.fullName + " as it is no longer found");
-                        Config.GetDatabase().DeleteFile(pf);
-                    }
-                    catch (Exception ex)
-                    {
-                        Config.WriteException(f, ex);
-                    }
-                    previouslyRecordedFiles.RemoveAt(previouslyRecordedFiles.Count - 1);
-                }
-            }
+            return new IndexDereferenceTask(this, previouslyRecordedFiles);
         }
 
         protected internal override void AddFilesInvoked(List<FileInfo> files)

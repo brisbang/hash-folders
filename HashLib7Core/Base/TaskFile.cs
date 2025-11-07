@@ -4,7 +4,7 @@ namespace HashLib7
     {
         internal FileInfo nextFile = file;
 
-        public override void Dispose()
+        public override void RegisterCompleted()
         {
             try
             {

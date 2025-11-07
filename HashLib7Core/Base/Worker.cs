@@ -63,14 +63,14 @@ namespace HashLib7
                             task.Execute();
                         }
                         catch (Exception ex) { Console.Error.WriteLine(ex.ToString()); }
-                        task.Dispose();
+                        task.RegisterCompleted();
                     }
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.ToString());
-                task.Dispose();
+                task.RegisterCompleted();
             }
         }
     }

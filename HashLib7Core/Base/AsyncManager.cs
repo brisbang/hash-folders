@@ -18,6 +18,7 @@ namespace HashLib7
         protected internal List<FileInfo> FilesToProcess;
         private List<string> _filesCompleted;
         private List<string> _foldersCompleted;
+        private bool HasInitialised = false;
         protected object MutexFilesFolders = new();
         private object _mutexThread = new();
         private object _mutexExecute = new();
@@ -32,8 +33,8 @@ namespace HashLib7
         internal AsyncManager()
         { }
 
-        protected virtual void InitialiseInvoked() { }
-        protected virtual void FinaliseInvoked() { }
+        protected virtual Task GetInitialTask() { return null;  }
+        protected virtual Task GetFinalTask() { return null;  }
         protected internal virtual void AddFilesInvoked(List<FileInfo> files) { }
 
         public abstract TaskStatus GetStatus();
@@ -146,8 +147,11 @@ namespace HashLib7
             lock (_mutexThread)
             {
                 ++NumThreadsRunning;
-                if (NumThreadsRunning == 1)
+                if (!HasInitialised)
+                {
+                    HasInitialised = true;
                     Initialise();
+                }
             }
         }
 
@@ -155,7 +159,7 @@ namespace HashLib7
         {
             lock (_mutexThread)
             {
-                if (NumThreadsRunning == 1)
+                if (NumThreadsRunning == 1) //So this is the last thread finishing up
                     Finalise();
                 --NumThreadsRunning;
             }
@@ -165,13 +169,13 @@ namespace HashLib7
         {
             Config.LogDebugging("State: Starting");
             State = StateEnum.Running;
-            InitialiseInvoked();
+            GetInitialTask()?.Execute();
         }
 
         private void Finalise()
         {
             if (State != StateEnum.Aborting)
-                FinaliseInvoked();
+                GetFinalTask()?.Execute();
             Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;
         }

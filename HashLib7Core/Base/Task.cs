@@ -20,7 +20,7 @@ namespace HashLib7
 
 
         public abstract void Execute();
-        public abstract void Dispose();
+        public abstract void RegisterCompleted();
         public abstract override string ToString();
     }
 }

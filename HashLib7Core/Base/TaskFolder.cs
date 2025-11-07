@@ -4,7 +4,7 @@ namespace HashLib7
     {
         internal string nextFolder = folder;
 
-        public override void Dispose()
+        public override void RegisterCompleted()
         {
             try
             {

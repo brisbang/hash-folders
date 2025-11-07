@@ -2,7 +2,7 @@ namespace HashLib7
 {
     public class TaskWait(AsyncManager parent) : Task(parent, TaskStatusEnum.tseWait)
     {
-        public override void Dispose()
+        public override void RegisterCompleted()
         {
         }
 
