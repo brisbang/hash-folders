@@ -7,7 +7,7 @@ namespace HashLib7
     {
         public override string Verb => "Report";
 
-        public override string Target => TargetFile.Path;
+        public override string Target => TargetFile.FullName;
 
         public override void Execute()
         {

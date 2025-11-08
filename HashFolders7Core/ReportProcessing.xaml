@@ -47,7 +47,7 @@
             <!-- Icon buttons row (Abort, Pause, Resume, Close) + gap + Add/Remove -->
             <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left" Margin="10,10,0,0">
                 <!-- Abort: square uses Button.Foreground (set to Red) -->
-                <Button x:Name="btnAbort1" Style="{StaticResource IconButton}" ToolTip="Abort" Foreground="Red">
+                <Button x:Name="btnAbort1" Style="{StaticResource IconButton}" ToolTip="Stop" Foreground="Red">
                     <Viewbox Stretch="Uniform">
                         <Canvas Width="100" Height="100">
                             <Rectangle Width="60" Height="60" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Canvas.Left="20" Canvas.Top="20" />
@@ -97,8 +97,28 @@
             </StackPanel>
             <Label Content="State:" HorizontalAlignment="Left" Margin="13,42,0,0" VerticalAlignment="Top"/>
             <Label Content="Running" HorizontalAlignment="Left" Margin="80,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbState" Width="66"/>
-            <Label Content="Result:" HorizontalAlignment="Left" Margin="13,68,0,0" VerticalAlignment="Top"/>
-            <Label Content="" HorizontalAlignment="Left" Margin="80,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbResultFile" Width="447"/>
+            <!-- result label + open-file button grouped so layout stays together -->
+            <Grid HorizontalAlignment="Left" Margin="80,68,0,0" VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="447" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Result:" Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,6,0" VerticalAlignment="Top" VerticalContentAlignment="Top"/>
+                <Label Content="" Grid.Column="1" x:Name="lbResultFile" Width="447" RenderTransformOrigin="0.476,1.53" VerticalAlignment="Top" VerticalContentAlignment="Top" />
+                <Button x:Name="btnOpenResult" Grid.Column="2" Style="{StaticResource IconButton}" ToolTip="Open result file" Margin="8,0,0,0">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <!-- simple document icon: outline with folded corner -->
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="6" Fill="Transparent"
+                                  Data="M25,20 L65,20 L80,35 L80,85 L25,85 Z M65,20 L65,35 L80,35" />
+                            <!-- small open arrow in lower-right -->
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Data="M50,60 L70,60 M60,50 L70,60 L60,70" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </Grid>
             <Label Content="00:00" HorizontalAlignment="Left" Margin="208,163,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbRemaining"/>
         </Grid>
         <Grid Grid.Row="1" VerticalAlignment="Top">

@@ -6,7 +6,7 @@ namespace HashLib7
     public class ReportManager(string path, int numThreadsDesired) : AsyncManager(path, numThreadsDesired)
     {
 
-        internal string OutputFile { get; set; }
+        public string OutputFile { get; internal set; }
         private readonly object MutexFile = new();
 
         public override Task GetFileTask(FileInfo file)
