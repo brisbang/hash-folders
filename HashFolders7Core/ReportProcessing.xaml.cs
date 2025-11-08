@@ -7,7 +7,7 @@ namespace HashFolders
     /// <summary>
     /// Interaction logic for ReportProcessing.xaml
     /// </summary>
-    public partial class ReportProcessing : Window, IThreadScreen
+    public partial class ReportProcessing : Window, IManagerWindow
     {
         private ReportManager _reporter;
         private ThreadScreenController _controller;
@@ -18,12 +18,14 @@ namespace HashFolders
             _reporter = reporter;
             // set up a simple ViewModel for the ListView
             DataContext = new WorkerStatusViewModel();
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
+            _controller = new ThreadScreenController(this, btnAbort1, btnPause, btnResume, btnThreadInc, btnThreadDec, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
         }
 
-        public ManagerStatus Refresh(object sender, EventArgs e)
+        public AsyncManager AsyncManager => _reporter;
+
+        public void RefreshStats(ManagerStatus mgrStatus)
         {
-            ReportManagerStatus status = (ReportManagerStatus) _reporter.GetStatus();
+            ReportManagerStatus status = (ReportManagerStatus)mgrStatus;
             lbResultFile.Content = status.outputFile;
 /*
             if (status.state == StateEnum.Running)
@@ -31,24 +33,6 @@ namespace HashFolders
             else
                 lbRemaining.Content = "";
                 */
-            return status;
-        }
-
-        public void Abort()
-        {
-            _reporter.Abort();
-        }
-        public void Pause()
-        {
-            _reporter.Suspend();
-        }
-        public void Resume()
-        {
-            _reporter.Resume();
-        }
-        public void CloseWindow()
-        {
-            this.Close();
         }
 
 

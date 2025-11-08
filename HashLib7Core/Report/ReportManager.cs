@@ -9,13 +9,9 @@ namespace HashLib7
         private string _outputFile;
         private object _mutexFile = new();
 
-        protected override List<Worker> ExecuteInvoked(int numThreads)
+        public ReportManager()
         {
             _outputFile = String.Format("{0}\\Report-{1}.csv", Config.DataPath, StartTime.ToString("yyyy-MM-dd-HHmmss"));
-            List<Worker> threads = [];
-            for (int i = 0; i < numThreads; i++)
-                threads.Add(new Worker(this));
-            return threads;
         }
 
         public override Task GetFileTask(FileInfo file)

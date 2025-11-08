@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace HashLib7
 {
@@ -9,8 +10,9 @@ namespace HashLib7
 
         public StateEnum State { get; protected set; } = StateEnum.Stopped;
         public string Path { get; private set; }
-        private List<Worker> _threads;
-        public int NumThreads { get; private set; }
+        private List<Worker> Workers;
+        public int NumThreadsDesired { get; private set; }
+        public int NumThreads { get { if (Workers == null) return 0; return Workers.Count; }}
         public int NumThreadsRunning { get; private set; }
         public int FoldersBeingProcessed { get; private set; }
         public int FilesBeingProcessed { get; private set; }
@@ -20,15 +22,48 @@ namespace HashLib7
         private List<string> _foldersCompleted;
         private bool HasInitialised = false;
         protected object MutexFilesFolders = new();
-        private object _mutexThread = new();
+        private object _mutexWorkers = new();
         private object _mutexExecute = new();
-        protected abstract List<Worker> ExecuteInvoked(int numThreads);
+        private int NumThreadsPendingIdle = 0;
         public DateTime StartTime { get; private set; }
         public TimeSpan Duration => new(DateTime.Now.Ticks - StartTime.Ticks);
-        public int NumFilesProcessed => _filesCompleted.Count;
-        public int NumFoldersScanned => _foldersCompleted.Count;
-        public int NumFilesOutstanding => FilesToProcess.Count + FilesBeingProcessed;
-        public int NumFoldersOutstanding => FoldersToProcess.Count + FoldersBeingProcessed;
+        public int NumFilesProcessed
+        {
+            get
+            {
+                if (_filesCompleted == null)
+                    return 0;
+                return _filesCompleted.Count;
+            }
+        }
+
+        public int NumFoldersScanned
+        {
+            get
+            {
+                if (_foldersCompleted == null)
+                    return 0;
+                return _foldersCompleted.Count;
+            }
+        }
+        public int NumFilesOutstanding
+        {
+            get
+            {
+                if (FilesToProcess == null)
+                    return 0;
+                return FilesToProcess.Count + FilesBeingProcessed;
+            }
+        }
+        public int NumFoldersOutstanding
+        {
+            get
+            {
+                if (FoldersToProcess == null)
+                    return 0;
+                return FoldersToProcess.Count + FoldersBeingProcessed;
+            }
+        }
 
         internal AsyncManager()
         { }
@@ -44,11 +79,17 @@ namespace HashLib7
         protected List<WorkerStatus> GetWorkerStatuses()
         {
             List<WorkerStatus> res = [];
-            lock (_mutexThread)
+            if (Workers != null)
             {
-                foreach (Worker w in _threads)
+                lock (_mutexWorkers)
                 {
-                    res.Add(w.Status);
+                    if (Workers != null)
+                    {
+                        foreach (Worker w in Workers)
+                        {
+                            res.Add(w.Status);
+                        }
+                    }
                 }
             }
             return res;
@@ -63,18 +104,30 @@ namespace HashLib7
             FilesToProcess = [];
             _foldersCompleted = [];
             _filesCompleted = [];
-            NumThreads = numThreads;
+            NumThreadsDesired = numThreads;
             StartTime = DateTime.Now;
-            lock (_mutexExecute)
+            lock (_mutexWorkers)
             {
-                if (_threads != null)
+                if (Workers != null)
                     throw new InvalidOperationException("Cannot ExecuteAsync whilst threads exist");
-                _threads = ExecuteInvoked(NumThreads);
-                foreach (Worker w in _threads)
-                    w.ExecuteAsync();
+                Workers = [];
             }
+            IncreaseThreadsToDesired();
         }
 
+        private void IncreaseThreadsToDesired()
+        {
+            lock (_mutexWorkers)
+            {
+                while (Workers.Count < NumThreadsDesired)
+                {
+                    Worker w = new(this);
+                    Workers.Add(w);
+                    w.ExecuteAsync();
+                }
+            }
+        }
+        
         public DateTime TimeRemaining()
         {
             long nfp = NumFilesProcessed;
@@ -133,23 +186,23 @@ namespace HashLib7
         
         public void Abort()
         {
-            if (_threads == null)
+            if (Workers == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Running || this.State == StateEnum.Paused)
                 this.State = StateEnum.Stopping;
         }
 
-        public void Suspend()
+        public void Pause()
         {
-            if (_threads == null)
+            if (Workers == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Running)
                 this.State = StateEnum.Paused;
         }
 
-        public void Resume()
+        public void Play()
         {
-            if (_threads == null)
+            if (Workers == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Paused)
                 this.State = StateEnum.Running;
@@ -157,7 +210,7 @@ namespace HashLib7
 
         internal void ThreadIsStarted()
         {
-            lock (_mutexThread)
+            lock (_mutexWorkers)
             {
                 ++NumThreadsRunning;
                 if (!HasInitialised)
@@ -168,9 +221,24 @@ namespace HashLib7
             }
         }
 
+        public void ThreadInc()
+        {
+            NumThreadsDesired++;
+        }
+        
+        public void ThreadDec()
+        {
+            if (NumThreadsDesired <= 1)
+                return;
+            NumThreadsDesired--;
+            //Somehow signal to the last worker that it is not going to continue.
+            //Is it in GetNextTask, that it should pass in its id?
+            //Should finished tasks be removed from the worker pool?
+        }
+
         internal void ThreadIsFinished()
         {
-            lock (_mutexThread)
+            lock (_mutexWorkers)
             {
                 if (NumThreadsRunning == 1) //So this is the last thread finishing up
                     Finalise();

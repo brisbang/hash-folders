@@ -10,11 +10,14 @@ namespace HashFolders
     {
         private System.Windows.Threading.DispatcherTimer _timer;
         private object _mutexMessage;
-        private IThreadScreen _screen;
+        private AsyncManager Manager;
+        private Window Screen;
+        private IManagerWindow ScreenExtra;
         private System.Windows.Controls.Button btnAbort1;
-        private System.Windows.Controls.Button btnClose1;
         private System.Windows.Controls.Button btnPause;
         private System.Windows.Controls.Button btnResume;
+        private System.Windows.Controls.Button btnThreadInc;
+        private System.Windows.Controls.Button btnThreadDec;
         private System.Windows.Controls.Label lbState;
         private System.Windows.Controls.Label lbRemaining;
         private System.Windows.Controls.Label lbFilesOutstanding;
@@ -23,11 +26,12 @@ namespace HashFolders
         private System.Windows.Controls.Label lbDuration;
         private WorkerStatusViewModel ReportViewModel;
 
-        public ThreadScreenController(IThreadScreen screen,
+        public ThreadScreenController(Window w,
             System.Windows.Controls.Button btnAbort1,
-            System.Windows.Controls.Button btnClose1,
             System.Windows.Controls.Button btnPause,
             System.Windows.Controls.Button btnResume,
+            System.Windows.Controls.Button btnThreadInc,
+            System.Windows.Controls.Button btnThreadDec,
             System.Windows.Controls.Label lbState,
             System.Windows.Controls.Label lbRemaining,
             System.Windows.Controls.Label lbFilesOutstanding,
@@ -37,12 +41,15 @@ namespace HashFolders
             WorkerStatusViewModel wsvm)
         {
             _mutexMessage = new();
-            _screen = screen;
-            ((Window)_screen).Closing += OnClosing;
+            Screen = w ?? throw new InvalidOperationException("Window cannot be null");
+            ScreenExtra = (IManagerWindow)Screen;
+            Manager = ScreenExtra.AsyncManager;
+            Screen.Closing += OnClosing;
             this.btnAbort1 = btnAbort1; this.btnAbort1.Click += btnAbort1_Click;
-            this.btnClose1 = btnClose1; this.btnClose1.Click += btnClose1_Click;
             this.btnPause = btnPause; this.btnPause.Click += btnPause_Click;
             this.btnResume = btnResume; this.btnResume.Click += btnResume_Click;
+            this.btnThreadInc = btnThreadInc; this.btnThreadInc.Click += btnThreadInc_Click;
+            this.btnThreadDec = btnThreadDec; this.btnThreadDec.Click += btnThreadDec_Click;
             this.lbState = lbState;
             this.lbRemaining = lbRemaining;
             this.lbFilesOutstanding = lbFilesOutstanding;
@@ -51,14 +58,15 @@ namespace HashFolders
             this.lbDuration = lbDuration;
             this.ReportViewModel = wsvm;
             _mutexMessage = new();
-            _screen = screen;
+            Refresh(null, null);
             _timer = new()
             {
                 Interval = new TimeSpan(0, 0, 1)
             };
             _timer.Tick += Refresh;
             _timer.IsEnabled = true;
-            ActivateButtonsByStatus(StateEnum.Undefined);
+            ActivateButtonsByStatus(Manager.GetStatus().state);
+            ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
@@ -66,7 +74,7 @@ namespace HashFolders
             //Try to end it in case it's still running.
             try
             {
-                _screen.Abort();
+                Manager.Abort();
             }
             catch { }
         }
@@ -75,7 +83,8 @@ namespace HashFolders
         {
             try
             {
-                ManagerStatus status = _screen.Refresh(sender, e);
+                ManagerStatus status = Manager.GetStatus();
+                ScreenExtra.RefreshStats(status);
                 lbRemaining.Content = "";
                 ActivateButtonsByStatus(status.state);
                 lbState.Content = status.state.ToString();
@@ -91,7 +100,7 @@ namespace HashFolders
                 {
                     MessageBox.Show(ex.ToString());
                 }
-                _screen.CloseWindow();
+                Screen.Close();
             }
         }
 
@@ -120,38 +129,39 @@ namespace HashFolders
             
         }
 
+        private void ActiveButtonsByThreadCount(int numThreads)
+        {
+            btnThreadDec.IsEnabled = (numThreads > 1);
+
+        }
+
         private void ActivateButtonsByStatus(StateEnum state)
         {
             switch (state)
             {
                 case StateEnum.Running:
                     btnAbort1.IsEnabled = true;
-                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = true;
                     btnResume.IsEnabled = false;
                     break;
                 case StateEnum.Paused:
                     btnAbort1.IsEnabled = true;
-                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = true;
                     break;
                 case StateEnum.Stopping:
                     btnAbort1.IsEnabled = false;
-                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
                     break;
                 case StateEnum.Stopped:
                     btnAbort1.IsEnabled = false;
-                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
-                    _timer.Stop();
+//                    if (_timer != null) _timer.Stop();
                     break;
                 case StateEnum.Undefined:
                     btnAbort1.IsEnabled = false;
-                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
                     break;
@@ -159,19 +169,35 @@ namespace HashFolders
             }
         }
 
-        private void btnClose1_Click(object sender, RoutedEventArgs e)
+        private void btnThreadInc_Click(object sender, RoutedEventArgs e)
         {
             try
-            { _screen.Abort(); }
-            catch { }
-            _screen.CloseWindow();
+            {
+                Manager.ThreadInc();
+                ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
             }
+            catch (Exception ex) {
+                MessageBox.Show(ex.ToString(), "Thread increment", MessageBoxButton.OK, MessageBoxImage.Error);
+             }
+        }
+
+        private void btnThreadDec_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Manager.ThreadDec();
+                ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
+            }
+            catch (Exception ex) {
+                MessageBox.Show(ex.ToString(), "Thread decrement", MessageBoxButton.OK, MessageBoxImage.Error);
+             }
+        }
 
         private void btnAbort1_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                _screen.Abort();
+                Manager.Abort();
             }
             catch (Exception ex)
             {
@@ -183,7 +209,7 @@ namespace HashFolders
         {
             try
             {
-                _screen.Pause();
+                Manager.Pause();
             }
             catch (Exception ex)
             {
@@ -195,7 +221,7 @@ namespace HashFolders
         {
             try
             {
-                _screen.Resume();
+                Manager.Play();
             }
             catch (Exception ex)
             {

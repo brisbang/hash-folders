@@ -39,15 +39,6 @@ namespace HashLib7
             return res;
         }
 
-        protected override List<Worker> ExecuteInvoked(int numThreads)
-        {
-
-            List<Worker> threads = [];
-            for (int i = 0; i < numThreads; i++)
-                threads.Add(new Worker(this));
-            return threads;
-        }
-
         protected override Task GetInitialTask()
         {
             return new IndexGetPreviousFilesTask(this, base.FoldersToProcess[0]);

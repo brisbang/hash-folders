@@ -7,44 +7,27 @@ namespace HashFolders
     /// <summary>
     /// Interaction logic for Window1.xaml
     /// </summary>
-    public partial class Indexing : Window, IThreadScreen
+    public partial class Indexing : Window, IManagerWindow
     {
         private IndexManager Indexer;
         private ThreadScreenController _controller;
+
+        public AsyncManager AsyncManager => Indexer;
 
         public Indexing(IndexManager indexer)
         {
             InitializeComponent();
             Indexer = indexer;
             DataContext = new WorkerStatusViewModel();
-            _controller = new ThreadScreenController(this, btnAbort1, btnClose1, btnPause, btnResume, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
+            _controller = new ThreadScreenController(this, btnAbort1, btnPause, btnResume, btnThreadInc, btnThreadDec, lbState, lbFilesProcessed, lbFilesOutstanding, lbFilesProcessed, lbNumThreadsRunning, lbDuration, (WorkerStatusViewModel)DataContext);
         }
 
-        public ManagerStatus Refresh(object sender, EventArgs e)
+        public void RefreshStats(ManagerStatus mgrStatus)
         {
-            IndexManagerStatus status = (IndexManagerStatus) Indexer.GetStatus();
+            IndexManagerStatus status = (IndexManagerStatus)mgrStatus;
             lbFoldersOutstanding.Content = status.foldersOutstanding;
             lbFoldersProcessed.Content = status.foldersProcessed;
-
-            return status;
         }
-        public void Abort()
-        {
-            Indexer.Abort();
-        }
-        public void Pause()
-        {
-            Indexer.Suspend();
-        }
-        public void Resume()
-        {
-            Indexer.Resume();
-        }
-        public void CloseWindow()
-        {
-            this.Close();
-        }
-
-
+        
     }
 }

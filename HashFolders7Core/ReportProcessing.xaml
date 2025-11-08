@@ -74,20 +74,11 @@
                     </Viewbox>
                 </Button>
 
-                <!-- Close: X uses Button.Foreground -->
-                <Button x:Name="btnClose1" Style="{StaticResource IconButton}" ToolTip="Close" Margin="8,0,0,0" IsEnabled="False">
-                    <Viewbox Stretch="Uniform">
-                        <Canvas Width="100" Height="100">
-                            <Path Data="M20,20 L80,80 M80,20 L20,80" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                        </Canvas>
-                    </Viewbox>
-                </Button>
-
                 <!-- small gap -->
                 <Rectangle Width="12" Fill="Transparent" />
 
                 <!-- Add: blue plus -->
-                <Button x:Name="btnAdd" Style="{StaticResource IconButton}" ToolTip="Add" Margin="8,0,0,0" Foreground="Blue">
+                <Button x:Name="btnThreadInc" Style="{StaticResource IconButton}" ToolTip="Add" Margin="8,0,0,0" Foreground="Blue">
                     <Viewbox Stretch="Uniform">
                         <Canvas Width="100" Height="100">
                             <Path Data="M50,20 L50,80 M20,50 L80,50" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
@@ -96,7 +87,7 @@
                 </Button>
 
                 <!-- Remove: blue minus -->
-                <Button x:Name="btnRemove" Style="{StaticResource IconButton}" ToolTip="Remove" Margin="8,0,0,0" Foreground="Blue">
+                <Button x:Name="btnThreadDec" Style="{StaticResource IconButton}" ToolTip="Remove" Margin="8,0,0,0" Foreground="Blue">
                     <Viewbox Stretch="Uniform">
                         <Canvas Width="100" Height="100">
                             <Path Data="M20,50 L80,50" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />

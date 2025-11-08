@@ -13,7 +13,7 @@ namespace HashLib7
             get
             {
                 if (task == null)
-                    return new WorkerStatus("");
+                    return new WorkerStatus("Idle");
                 return new WorkerStatus(task.Verb, task.Target);
             }
         }
