@@ -25,42 +25,52 @@ namespace HashLib7
         {
             FileInfoDetailed info = RetrieveFile(filePath);
             RiskAssessment res = new(info);
-            var localDriveInfo = Config.Drives.Get(info.Path);
-            List<HashLib7.DriveInfo> backupDriveInfos = [];
-            if (info.backupLocations != null)
+            if (info.size == 0)
             {
-                foreach (var backup in info.backupLocations)
-                {
-                    var driveInfo = Config.Drives.Get(backup.Path);
-                    if (!backupDriveInfos.Contains(driveInfo))
-                        backupDriveInfos.Add(driveInfo);
-                }
-            }
-            res.Theft = true;
-            foreach (var driveInfo in backupDriveInfos)
-            {
-                if (driveInfo.MitigatesRiskOfTheft(localDriveInfo))
-                {
-                    res.Theft = false;
-                    break;
-                }
-            }
-            res.Corruption = info.backupLocations?.Count == 0;
-            res.DiskFailure = true;
-            if (localDriveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                res.Theft = false;
+                res.Corruption = false;
                 res.DiskFailure = false;
+                res.Fire = false;
+            }
             else
             {
+                var localDriveInfo = Config.Drives.Get(info.Path);
+                List<HashLib7.DriveInfo> backupDriveInfos = [];
+                if (info.backupLocations != null)
+                {
+                    foreach (var backup in info.backupLocations)
+                    {
+                        var driveInfo = Config.Drives.Get(backup.Path);
+                        if (!backupDriveInfos.Contains(driveInfo))
+                            backupDriveInfos.Add(driveInfo);
+                    }
+                }
+                res.Theft = true;
                 foreach (var driveInfo in backupDriveInfos)
                 {
-                    if (driveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                    if (driveInfo.MitigatesRiskOfTheft(localDriveInfo))
                     {
-                        res.DiskFailure = false;
+                        res.Theft = false;
                         break;
                     }
                 }
+                res.Corruption = info.backupLocations?.Count == 0;
+                res.DiskFailure = true;
+                if (localDriveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                    res.DiskFailure = false;
+                else
+                {
+                    foreach (var driveInfo in backupDriveInfos)
+                    {
+                        if (driveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
+                        {
+                            res.DiskFailure = false;
+                            break;
+                        }
+                    }
+                }
+                res.Fire = true;
             }
-            res.Fire = true;
             Config.GetDatabase().SaveRiskAssessment(res);
             return res;
         }

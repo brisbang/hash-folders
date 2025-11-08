@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class RAManager : AsyncManager
+    public class RAManager(string path, int numThreadsDesired) : AsyncManager(path, numThreadsDesired)
     {
 
         public override Task GetFileTask(FileInfo file)

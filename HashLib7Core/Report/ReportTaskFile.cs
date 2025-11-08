@@ -3,12 +3,8 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class ReportTaskFile : TaskFile
+    public class ReportTaskFile(AsyncManager parent, FileInfo file) : TaskFile(parent, file)
     {
-        public ReportTaskFile(AsyncManager parent, FileInfo file) : base(parent, file)
-        {
-        }
-
         public override string Verb => "Report";
 
         public override string Target => TargetFile.Path;
@@ -46,11 +42,14 @@ namespace HashLib7
             if (localBackups.Count > 0) localBackupFirst = SafeFilename(localBackups[0]);
             if (remoteBackups.Count > 0) remoteBackupFirst = SafeFilename(remoteBackups[0]);
 
-            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}\n", SafeFilename(rr.filePath), rr.hash, rr.size.ToString(),
-                ra.DiskFailure ? "Y" : "",
-                ra.Corruption ? "Y" : "",
-                ra.Theft ? "Y" : "",
-                ra.Fire ? "Y" : "",
+            string res = String.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}\n",
+                SafeFilename(rr.filePath),
+                rr.hash,
+                rr.size.ToString(),
+                ra.DiskFailure ? "" : "Y",
+                ra.Corruption ? "" : "Y",
+                ra.Theft ? "" : "Y",
+                ra.Fire ? "" : "Y",
                localCopies.Count.ToString(),
                localBackups.Count.ToString(),
                remoteBackups.Count.ToString(),

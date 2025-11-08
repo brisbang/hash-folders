@@ -3,28 +3,19 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class ReportManager : AsyncManager
+    public class ReportManager(string path, int numThreadsDesired) : AsyncManager(path, numThreadsDesired)
     {
 
         internal string OutputFile { get; set; }
-        private object MutexFile = new();
-        internal bool HasCompletedHeader = false;
-
-        public ReportManager()
-        {
-        }
+        private readonly object MutexFile = new();
 
         public override Task GetFileTask(FileInfo file)
         {
-            if (!HasCompletedHeader)
-                return new TaskWait(this);
             return new ReportTaskFile(this, file);
         }
 
         public override Task GetFolderTask(string folder)
         {
-            if (!HasCompletedHeader)
-                return new TaskWait(this);
             return new ReportTaskFolder(this, folder);
         }
 

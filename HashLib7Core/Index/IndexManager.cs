@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace HashLib7
 {
-    public class IndexManager : AsyncManager
+    public class IndexManager(string path, int numThreadsDesired) : AsyncManager(path, numThreadsDesired)
     {
         //All previously known files under the folder. After processing is complete, any files in this list were not found and so can be removed from the database.
         //The short is not needed and so left 0 for performance reasons
@@ -41,7 +41,7 @@ namespace HashLib7
 
         protected override Task GetInitialTask()
         {
-            return new IndexGetPreviousFilesTask(this, base.FoldersToProcess[0]);
+            return new IndexGetPreviousFilesTask(this, Path);
         }
 
         /// <summary>

@@ -385,9 +385,15 @@ namespace HashFolders
             const string title = "Index";
             try
             {
-                IndexManager indexer = new();
+                if (FolderTree.SelectedItem is not FolderItem folder)
+                {
+                    MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                IndexManager indexer = new(folder.Path, HashLib7.UserSettings.ThreadCount);
                 Indexing p = new(indexer);
-                LaunchScreen(indexer, p, title);
+                indexer.ExecuteAsync();
+                p.ShowDialog();
             }
             catch (Exception ex)
             {
@@ -400,9 +406,15 @@ namespace HashFolders
             const string title = "Risk Assessment";
             try
             {
-                RAManager assessor = new();
+                if (FolderTree.SelectedItem is not FolderItem folder)
+                {
+                    MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                RAManager assessor = new(folder.Path, HashLib7.UserSettings.ThreadCount);
                 RiskAssessmentProcessing p = new(assessor);
-                LaunchScreen(assessor, p, title);
+                assessor.ExecuteAsync();
+                p.ShowDialog();
             }
             catch (Exception ex)
             {
@@ -415,25 +427,20 @@ namespace HashFolders
             const string title = "Report";
             try
             {
-                ReportManager reporter = new();
+                if (FolderTree.SelectedItem is not FolderItem folder)
+                {
+                    MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                ReportManager reporter = new(folder.Path, HashLib7.UserSettings.ThreadCount);
                 ReportProcessing p = new(reporter);
-                LaunchScreen(reporter, p, title);
+                reporter.ExecuteAsync();
+                p.ShowDialog();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error reporting folder: {ex.Message}", title, MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void LaunchScreen(AsyncManager mgr, Window w, string title)
-        {
-            if (FolderTree.SelectedItem is not FolderItem folder)
-            {
-                MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            mgr.ExecuteAsync(folder.Path, HashLib7.UserSettings.ThreadCount);
-            w.ShowDialog();
         }
 
         private void HandleDeleteAction()

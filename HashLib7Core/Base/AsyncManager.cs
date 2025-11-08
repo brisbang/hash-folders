@@ -7,7 +7,11 @@ namespace HashLib7
 
     public abstract class AsyncManager
     {
-
+        internal AsyncManager(string path, int numThreadsDesired)
+        {
+            Path = path;
+            NumThreadsDesired = numThreadsDesired;
+        }
         public StateEnum State { get; protected set; } = StateEnum.Stopped;
         public string Path { get; private set; }
         private readonly List<Worker> Workers = [];
@@ -16,6 +20,7 @@ namespace HashLib7
         public int NumThreadsRunning { get { if (Workers == null) return 0; return Workers.Count; }}
         public int FoldersBeingProcessed { get; private set; }
         public int FilesBeingProcessed { get; private set; }
+        internal bool InitialTaskInProgress = false;
         protected internal List<string> FoldersToProcess = [];
         protected internal List<FileInfo> FilesToProcess = [];
         private List<string> FilesCompleted = [];
@@ -67,9 +72,6 @@ namespace HashLib7
             }
         }
 
-        internal AsyncManager()
-        { }
-
         protected virtual Task GetInitialTask() { return null; }
         protected virtual Task GetFinalTask() { return null; }
         protected internal virtual void AddFilesInvoked(List<FileInfo> files) { }
@@ -89,17 +91,15 @@ namespace HashLib7
             return res;
         }
 
-        public void ExecuteAsync(string path, int numThreads)
+        public void ExecuteAsync()
         {
-            if (String.IsNullOrEmpty(path)) throw new InvalidOperationException("Folder not specified");
-            if (numThreads <= 0) throw new InvalidOperationException("Number of threads must be positive");
+            if (String.IsNullOrEmpty(Path)) throw new InvalidOperationException("Folder not specified");
+            if (NumThreadsDesired <= 0) throw new InvalidOperationException("Number of threads must be positive");
             if (NumThreadsRunning > 0) throw new InvalidOperationException("Cannot ExecuteAsync whilst threads exist");
-            Path = path;
-            FoldersToProcess = []; FoldersToProcess.Add(path);
+            FoldersToProcess = [];
             FilesToProcess = [];
             FoldersCompleted = [];
             FilesCompleted = [];
-            NumThreadsDesired = numThreads;
             StartTime = DateTime.Now;
             IncreaseThreadsToDesired();
         }
@@ -136,26 +136,27 @@ namespace HashLib7
 
         internal Task GetNextTask()
         {
-            lock (MutexFilesFolders)
+            switch (this.State)
             {
-                switch (this.State)
-                {
-                    case StateEnum.Paused:
-                        return new TaskWait(this);
-                    case StateEnum.Stopping:
-                    case StateEnum.Stopped:
-                    case StateEnum.Undefined:
+                case StateEnum.Paused:
+                    return new TaskWait(this);
+                case StateEnum.Stopping:
+                case StateEnum.Stopped:
+                case StateEnum.Undefined:
+                    return null;
+                case StateEnum.Running:
+                    if (NumThreadsToFinish > 0) //Do we need to cut back threads? Let's do it.
+                    {
+                        NumThreadsToFinish--;
                         return null;
-                    case StateEnum.Running:
-                        if (NumThreadsToFinish > 0) //Do we need to cut back threads? Let's do it.
-                        {
-                            NumThreadsToFinish--;
-                            return null;
-                        }
+                    }
+                    lock (MutexFilesFolders)
+                    {
                         if (!DeliveredInitialTask)
                         {
                             DeliveredInitialTask = true;
                             Task initial = GetInitialTask();
+                            InitialTaskInProgress = true;
                             if (initial != null)
                                 return initial;
                         }
@@ -164,38 +165,32 @@ namespace HashLib7
                             Config.LogDebugging("Processing folder");
                             return GetFolderToProcess();
                         }
-                        else
+                        if (FilesToProcess.Count > 0)
                         {
-                            if (FilesToProcess.Count > 0)
-                            {
-                                Config.LogDebugging("Processing file");
-                                return GetFileToProcess();
-                            }
-                            else
-                            {
-                                if ((FoldersBeingProcessed > 0) || (FilesBeingProcessed > 0))
-                                {
-                                    //We wait until everything is done before heading to Finalise
-                                    Config.LogDebugging("Waiting...");
-                                    return new TaskWait(this);
-                                }
-                            }
-                            AllowCreateThreads = false;
-                            if (NumThreadsRunning == 1) //Last thread - let's see if we should deliver the final task
-                            {
-                                if (!DeliveredFinalTask)
-                                {
-                                    DeliveredFinalTask = true;
-                                    Task final = GetFinalTask();
-                                    if (final != null)
-                                        return final;
-                                }
-                            }
-                            EndTime = DateTime.Now;
-                            return null;
+                            Config.LogDebugging("Processing file");
+                            return GetFileToProcess();
                         }
-                    default: throw new Exception("Unknown StateEnum!");
-                }
+                        if ((FoldersBeingProcessed > 0) || (FilesBeingProcessed > 0) || InitialTaskInProgress)
+                        {
+                            //We wait until everything is done before heading to Finalise
+                            Config.LogDebugging("Waiting...");
+                            return new TaskWait(this);
+                        }
+                        AllowCreateThreads = false;
+                        if (NumThreadsRunning == 1) //Last thread - let's see if we should deliver the final task
+                        {
+                            if (!DeliveredFinalTask)
+                            {
+                                DeliveredFinalTask = true;
+                                Task final = GetFinalTask();
+                                if (final != null)
+                                    return final;
+                            }
+                        }
+                        EndTime = DateTime.Now;
+                        return null;
+                    }
+                default: throw new Exception("Unknown StateEnum!");
             }
         }
         

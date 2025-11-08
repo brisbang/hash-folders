@@ -14,7 +14,10 @@ namespace HashLib7
 
         public override void Execute()
         {
-            ((IndexManager) Parent).previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(Folder);
+            IndexManager parent = (IndexManager)Parent;
+            parent.previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(Folder);
+            parent.FoldersToProcess.Add(parent.Path);
+            parent.InitialTaskInProgress = false;
         }
     }
 }

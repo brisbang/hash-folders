@@ -13,7 +13,8 @@ namespace HashLib7
             ReportManager rmParent = (ReportManager)Parent;
             rmParent.OutputFile = String.Format("{0}\\Report-{1}.csv", Config.DataPath, rmParent.StartTime.ToString("yyyy-MM-dd-HHmmss"));
             rmParent.LogDetail(ReportHeader());
-            rmParent.HasCompletedHeader = true;
+            rmParent.FoldersToProcess.Add(rmParent.Path);
+            rmParent.InitialTaskInProgress = false;
         }
 
         private static string ReportHeader()
