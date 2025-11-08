@@ -13,9 +13,5 @@ namespace HashLib7
             catch { }
         }
 
-        public override string ToString()
-        {
-            return "Scanning: " + nextFolder;
-        }
     }
 }

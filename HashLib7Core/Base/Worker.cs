@@ -38,7 +38,7 @@ namespace HashLib7
             }
             finally
             {
-                Parent.ThreadIsFinished();
+                Parent.ThreadIsFinished(this);
             }
         }
 

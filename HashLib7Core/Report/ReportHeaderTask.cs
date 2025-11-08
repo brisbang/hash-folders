@@ -8,12 +8,9 @@ namespace HashLib7
 
         public override void Execute()
         {
-            ((ReportManager) Parent).LogDetail(ReportHeader());
-        }
-
-        public override void RegisterCompleted()
-        {
-            
+            ReportManager rmParent = (ReportManager)Parent;
+            rmParent.LogDetail(ReportHeader());
+            rmParent.HasCompletedHeader = true;
         }
 
         private static string ReportHeader()

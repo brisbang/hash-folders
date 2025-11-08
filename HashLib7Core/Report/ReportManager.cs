@@ -8,6 +8,7 @@ namespace HashLib7
 
         private string _outputFile;
         private object _mutexFile = new();
+        internal bool HasCompletedHeader = false;
 
         public ReportManager()
         {
@@ -16,11 +17,15 @@ namespace HashLib7
 
         public override Task GetFileTask(FileInfo file)
         {
+            if (!HasCompletedHeader)
+                return new TaskWait(this);
             return new ReportTaskFile(this, file);
         }
 
         public override Task GetFolderTask(string folder)
         {
+            if (!HasCompletedHeader)
+                return new TaskWait(this);
             return new ReportTaskFolder(this, folder);
         }
 

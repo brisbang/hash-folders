@@ -20,7 +20,7 @@ namespace HashLib7
 
 
         public abstract void Execute();
-        public abstract void RegisterCompleted();
+        public virtual void RegisterCompleted() {}
         public abstract string Verb { get; }
         public abstract string Target { get; }
     }

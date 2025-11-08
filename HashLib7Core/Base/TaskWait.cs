@@ -6,10 +6,6 @@ namespace HashLib7
 
         public override string Target => "";
 
-        public override void RegisterCompleted()
-        {
-        }
-
         public override void Execute()
         {
             System.Threading.Thread.Sleep(500);

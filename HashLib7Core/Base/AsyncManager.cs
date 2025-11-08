@@ -10,30 +10,38 @@ namespace HashLib7
 
         public StateEnum State { get; protected set; } = StateEnum.Stopped;
         public string Path { get; private set; }
-        private List<Worker> Workers;
+        private readonly List<Worker> Workers = [];
         public int NumThreadsDesired { get; private set; }
-        public int NumThreads { get { if (Workers == null) return 0; return Workers.Count; }}
-        public int NumThreadsRunning { get; private set; }
+        public int NumThreadsToFinish = 0;
+        public int NumThreadsRunning { get { if (Workers == null) return 0; return Workers.Count; }}
         public int FoldersBeingProcessed { get; private set; }
         public int FilesBeingProcessed { get; private set; }
-        protected internal List<string> FoldersToProcess;
-        protected internal List<FileInfo> FilesToProcess;
-        private List<string> _filesCompleted;
-        private List<string> _foldersCompleted;
+        protected internal List<string> FoldersToProcess = [];
+        protected internal List<FileInfo> FilesToProcess = [];
+        private List<string> FilesCompleted = [];
+        private List<string> FoldersCompleted = [];
         private bool HasInitialised = false;
+        private bool AllowCreateThreads = true;
+        private bool DeliveredInitialTask = false;
+        private bool DeliveredFinalTask = false;
         protected object MutexFilesFolders = new();
-        private object _mutexWorkers = new();
-        private object _mutexExecute = new();
-        private int NumThreadsPendingIdle = 0;
+        private readonly object MutexWorkers = new();
         public DateTime StartTime { get; private set; }
-        public TimeSpan Duration => new(DateTime.Now.Ticks - StartTime.Ticks);
+        public DateTime EndTime { get; private set; }
+        public TimeSpan Duration
+        {
+            get
+            {
+                if (EndTime == DateTime.MaxValue)
+                    return new(DateTime.Now.Ticks - StartTime.Ticks);
+                return new(EndTime.Ticks - StartTime.Ticks);
+            }
+        }
         public int NumFilesProcessed
         {
             get
             {
-                if (_filesCompleted == null)
-                    return 0;
-                return _filesCompleted.Count;
+                return FilesCompleted.Count;
             }
         }
 
@@ -41,17 +49,13 @@ namespace HashLib7
         {
             get
             {
-                if (_foldersCompleted == null)
-                    return 0;
-                return _foldersCompleted.Count;
+                return FoldersCompleted.Count;
             }
         }
         public int NumFilesOutstanding
         {
             get
             {
-                if (FilesToProcess == null)
-                    return 0;
                 return FilesToProcess.Count + FilesBeingProcessed;
             }
         }
@@ -59,8 +63,6 @@ namespace HashLib7
         {
             get
             {
-                if (FoldersToProcess == null)
-                    return 0;
                 return FoldersToProcess.Count + FoldersBeingProcessed;
             }
         }
@@ -68,8 +70,8 @@ namespace HashLib7
         internal AsyncManager()
         { }
 
-        protected virtual Task GetInitialTask() { return null;  }
-        protected virtual Task GetFinalTask() { return null;  }
+        protected virtual Task GetInitialTask() { return null; }
+        protected virtual Task GetFinalTask() { return null; }
         protected internal virtual void AddFilesInvoked(List<FileInfo> files) { }
 
         public abstract ManagerStatus GetStatus();
@@ -79,18 +81,10 @@ namespace HashLib7
         protected List<WorkerStatus> GetWorkerStatuses()
         {
             List<WorkerStatus> res = [];
-            if (Workers != null)
+            lock (MutexWorkers)
             {
-                lock (_mutexWorkers)
-                {
-                    if (Workers != null)
-                    {
-                        foreach (Worker w in Workers)
-                        {
-                            res.Add(w.Status);
-                        }
-                    }
-                }
+                foreach (Worker w in Workers)
+                    res.Add(w.Status);
             }
             return res;
         }
@@ -99,31 +93,29 @@ namespace HashLib7
         {
             if (String.IsNullOrEmpty(path)) throw new InvalidOperationException("Folder not specified");
             if (numThreads <= 0) throw new InvalidOperationException("Number of threads must be positive");
+            if (NumThreadsRunning > 0) throw new InvalidOperationException("Cannot ExecuteAsync whilst threads exist");
             Path = path;
             FoldersToProcess = []; FoldersToProcess.Add(path);
             FilesToProcess = [];
-            _foldersCompleted = [];
-            _filesCompleted = [];
+            FoldersCompleted = [];
+            FilesCompleted = [];
             NumThreadsDesired = numThreads;
             StartTime = DateTime.Now;
-            lock (_mutexWorkers)
-            {
-                if (Workers != null)
-                    throw new InvalidOperationException("Cannot ExecuteAsync whilst threads exist");
-                Workers = [];
-            }
             IncreaseThreadsToDesired();
         }
 
         private void IncreaseThreadsToDesired()
         {
-            lock (_mutexWorkers)
+            lock (MutexWorkers)
             {
-                while (Workers.Count < NumThreadsDesired)
+                if (AllowCreateThreads)
                 {
-                    Worker w = new(this);
-                    Workers.Add(w);
-                    w.ExecuteAsync();
+                    while (Workers.Count < NumThreadsDesired)
+                    {
+                        Worker w = new(this);
+                        Workers.Add(w);
+                        w.ExecuteAsync();
+                    }
                 }
             }
         }
@@ -155,6 +147,18 @@ namespace HashLib7
                     case StateEnum.Undefined:
                         return null;
                     case StateEnum.Running:
+                        if (NumThreadsToFinish > 0) //Do we need to cut back threads? Let's do it.
+                        {
+                            NumThreadsToFinish--;
+                            return null;
+                        }
+                        if (!DeliveredInitialTask)
+                        {
+                            DeliveredInitialTask = true;
+                            Task initial = GetInitialTask();
+                            if (initial != null)
+                                return initial;
+                        }
                         if (FoldersToProcess.Count > 0)
                         {
                             Config.LogDebugging("Processing folder");
@@ -169,15 +173,26 @@ namespace HashLib7
                             }
                             else
                             {
-                                if (FoldersBeingProcessed > 0)
+                                if ((FoldersBeingProcessed > 0) || (FilesBeingProcessed > 0))
                                 {
                                     //We wait until everything is done before heading to Finalise
                                     Config.LogDebugging("Waiting...");
                                     return new TaskWait(this);
                                 }
-                                else //If only files are left, then you can stop here.
-                                    return null;
                             }
+                            AllowCreateThreads = false;
+                            if (NumThreadsRunning == 1) //Last thread - let's see if we should deliver the final task
+                            {
+                                if (!DeliveredFinalTask)
+                                {
+                                    DeliveredFinalTask = true;
+                                    Task final = GetFinalTask();
+                                    if (final != null)
+                                        return final;
+                                }
+                            }
+                            EndTime = DateTime.Now;
+                            return null;
                         }
                     default: throw new Exception("Unknown StateEnum!");
                 }
@@ -186,33 +201,26 @@ namespace HashLib7
         
         public void Abort()
         {
-            if (Workers == null)
-                throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Running || this.State == StateEnum.Paused)
                 this.State = StateEnum.Stopping;
         }
 
         public void Pause()
         {
-            if (Workers == null)
-                throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Running)
                 this.State = StateEnum.Paused;
         }
 
         public void Play()
         {
-            if (Workers == null)
-                throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Paused)
                 this.State = StateEnum.Running;
         }
 
         internal void ThreadIsStarted()
         {
-            lock (_mutexWorkers)
+            lock (MutexWorkers)
             {
-                ++NumThreadsRunning;
                 if (!HasInitialised)
                 {
                     HasInitialised = true;
@@ -224,6 +232,15 @@ namespace HashLib7
         public void ThreadInc()
         {
             NumThreadsDesired++;
+            lock (MutexWorkers)
+            {
+                if (NumThreadsToFinish > 0)
+                {
+                    NumThreadsToFinish--;
+                    return;
+                }
+            }
+            IncreaseThreadsToDesired();
         }
         
         public void ThreadDec()
@@ -231,18 +248,22 @@ namespace HashLib7
             if (NumThreadsDesired <= 1)
                 return;
             NumThreadsDesired--;
+            lock (MutexWorkers)
+            {
+                NumThreadsToFinish++;
+            }
             //Somehow signal to the last worker that it is not going to continue.
             //Is it in GetNextTask, that it should pass in its id?
             //Should finished tasks be removed from the worker pool?
         }
 
-        internal void ThreadIsFinished()
+        internal void ThreadIsFinished(Worker w)
         {
-            lock (_mutexWorkers)
+            if (NumThreadsRunning == 1) //So this is the last thread finishing up
+                Finalise();
+            lock (MutexWorkers)
             {
-                if (NumThreadsRunning == 1) //So this is the last thread finishing up
-                    Finalise();
-                --NumThreadsRunning;
+                Workers.Remove(w);
             }
         }
 
@@ -255,8 +276,6 @@ namespace HashLib7
 
         private void Finalise()
         {
-            if (State != StateEnum.Stopping)
-                GetFinalTask()?.Execute();
             Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;
         }
@@ -284,8 +303,10 @@ namespace HashLib7
                 if (folders != null)
                     FoldersToProcess.AddRange(folders);
                 if (files != null)
+                {
                     FilesToProcess.AddRange(files);
-                AddFilesInvoked(files);
+                    AddFilesInvoked(files);
+                }
             }
         }
 
@@ -293,7 +314,7 @@ namespace HashLib7
         {
             lock (MutexFilesFolders)
             {
-                _foldersCompleted.Add(folderScanned);
+                FoldersCompleted.Add(folderScanned);
                 FoldersBeingProcessed--;
             }
         }
@@ -302,7 +323,7 @@ namespace HashLib7
         {
             lock (MutexFilesFolders)
             {
-                _filesCompleted.Add(file);
+                FilesCompleted.Add(file);
                 FilesBeingProcessed--;
             }
         }

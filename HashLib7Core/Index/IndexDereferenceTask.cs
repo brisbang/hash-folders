@@ -42,10 +42,6 @@ namespace HashLib7
             }
          }
                 
-        public override void RegisterCompleted()
-        {
-            
-        }
 
     }
 }

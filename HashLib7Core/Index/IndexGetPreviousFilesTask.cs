@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HashLib7
 {
-    public class IndexGetPreviousFilesTask(AsyncManager parent, string folder) : TaskFolder(parent, folder)
+    public class IndexGetPreviousFilesTask(AsyncManager parent, string folder) : Task(parent, TaskStatusEnum.tseProcess)
     {
-        public override string Verb => "Retrieve";
+        public override string Verb => "Previous file search";
 
-        public override string Target => "Previous files";
+        public override string Target => Folder;
+
+        private readonly string Folder = folder;
 
         public override void Execute()
         {
-            ((IndexManager) Parent).previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(this.nextFolder);
+            ((IndexManager) Parent).previouslyRecordedFiles = Config.GetDatabase().GetFilesByPathBrief(Folder);
         }
     }
 }

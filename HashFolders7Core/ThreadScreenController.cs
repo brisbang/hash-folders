@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Forms;
 using HashLib7;
 
 namespace HashFolders
@@ -25,6 +26,7 @@ namespace HashFolders
         private System.Windows.Controls.Label lbNumThreadsRunning;
         private System.Windows.Controls.Label lbDuration;
         private WorkerStatusViewModel ReportViewModel;
+        private ManagerStatus LastStatus;
 
         public ThreadScreenController(Window w,
             System.Windows.Controls.Button btnAbort1,
@@ -65,8 +67,7 @@ namespace HashFolders
             };
             _timer.Tick += Refresh;
             _timer.IsEnabled = true;
-            ActivateButtonsByStatus(Manager.GetStatus().state);
-            ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
+            ActivateButtonsByStatus(Manager.GetStatus());
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
@@ -86,7 +87,7 @@ namespace HashFolders
                 ManagerStatus status = Manager.GetStatus();
                 ScreenExtra.RefreshStats(status);
                 lbRemaining.Content = "";
-                ActivateButtonsByStatus(status.state);
+                ActivateButtonsByStatus(status);
                 lbState.Content = status.state.ToString();
                 lbFilesOutstanding.Content = status.filesOutstanding;
                 lbFilesProcessed.Content = status.filesProcessed;
@@ -98,7 +99,7 @@ namespace HashFolders
             {
                 lock (_mutexMessage)
                 {
-                    MessageBox.Show(ex.ToString());
+                    System.Windows.MessageBox.Show(ex.ToString());
                 }
                 Screen.Close();
             }
@@ -129,44 +130,36 @@ namespace HashFolders
             
         }
 
-        private void ActiveButtonsByThreadCount(int numThreads)
+        private void ActivateButtonsByStatus(ManagerStatus status)
         {
-            btnThreadDec.IsEnabled = (numThreads > 1);
-
-        }
-
-        private void ActivateButtonsByStatus(StateEnum state)
-        {
-            switch (state)
+            switch (status.state)
             {
                 case StateEnum.Running:
                     btnAbort1.IsEnabled = true;
                     btnPause.IsEnabled = true;
                     btnResume.IsEnabled = false;
+                    btnThreadInc.IsEnabled = true;
+                    btnThreadDec.IsEnabled = (Manager.NumThreadsDesired > 1);
                     break;
                 case StateEnum.Paused:
                     btnAbort1.IsEnabled = true;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = true;
+                    btnThreadInc.IsEnabled = true;
+                    btnThreadDec.IsEnabled = (Manager.NumThreadsDesired > 1);
                     break;
                 case StateEnum.Stopping:
-                    btnAbort1.IsEnabled = false;
-                    btnPause.IsEnabled = false;
-                    btnResume.IsEnabled = false;
-                    break;
                 case StateEnum.Stopped:
-                    btnAbort1.IsEnabled = false;
-                    btnPause.IsEnabled = false;
-                    btnResume.IsEnabled = false;
-//                    if (_timer != null) _timer.Stop();
-                    break;
                 case StateEnum.Undefined:
                     btnAbort1.IsEnabled = false;
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
+                    btnThreadInc.IsEnabled = false;
+                    btnThreadDec.IsEnabled = false;
                     break;
                 default: throw new InvalidOperationException("Undefined StateEnum");
             }
+            LastStatus = status;
         }
 
         private void btnThreadInc_Click(object sender, RoutedEventArgs e)
@@ -174,10 +167,10 @@ namespace HashFolders
             try
             {
                 Manager.ThreadInc();
-                ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
+                ActivateButtonsByStatus(LastStatus);
             }
             catch (Exception ex) {
-                MessageBox.Show(ex.ToString(), "Thread increment", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.ToString(), "Thread increment", MessageBoxButton.OK, MessageBoxImage.Error);
              }
         }
 
@@ -186,10 +179,10 @@ namespace HashFolders
             try
             {
                 Manager.ThreadDec();
-                ActiveButtonsByThreadCount(Manager.NumThreadsDesired);
+                ActivateButtonsByStatus(LastStatus);
             }
             catch (Exception ex) {
-                MessageBox.Show(ex.ToString(), "Thread decrement", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.ToString(), "Thread decrement", MessageBoxButton.OK, MessageBoxImage.Error);
              }
         }
 
@@ -201,7 +194,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(), "Abort", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.ToString(), "Abort", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -213,7 +206,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(), "Pause", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.ToString(), "Pause", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -225,7 +218,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(), "Resume", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(ex.ToString(), "Resume", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
