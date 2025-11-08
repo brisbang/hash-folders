@@ -9,30 +9,28 @@ namespace HashLib7
         {
         }
 
-        public override string Verb => "Record";
+        public override string Verb => "Report";
 
-        public override string Target => nextFile.Path;
+        public override string Target => TargetFile.Path;
 
         public override void Execute()
         {
             ReportManager reportParent = (ReportManager)Parent;
             ReportRow rr = new()
             {
-                hash = nextFile.hash,
-                filePath = nextFile.FullName,
-                size = nextFile.size
+                hash = TargetFile.hash,
+                filePath = TargetFile.FullName,
+                size = TargetFile.size
             };
-            FileLocations locations = new(nextFile.FullName);
-            if (nextFile.size > 0)
+            FileLocations locations = new(TargetFile.FullName);
+            if (TargetFile.size > 0)
             {
-                List<PathFormatted> matchingFiles = Config.GetDatabase().GetFilesByHash(nextFile.hash);
+                List<PathFormatted> matchingFiles = Config.GetDatabase().GetFilesByHash(TargetFile.hash);
                 foreach (PathFormatted match in matchingFiles)
                     locations.AddDuplicate(match);
             }
-            //TODO: If the RiskAssessment is within X days then use it.
-            var ra = new RiskAssessment(new FileInfoDetailed(nextFile.FullName));
-//            RiskAssessment ra = FileManager.GetRiskAssessment(new PathFormatted(nextFile.FullName));
-            Config.LogDebugging("Logging file " + nextFile.FullName);
+            RiskAssessment ra = FileManager.GetRiskAssessment(new PathFormatted(TargetFile.FullName));
+            Config.LogDebugging("Logging file " + TargetFile.FullName);
             reportParent.LogDetail(ReportRowToString(locations, rr, ra));
         }
 

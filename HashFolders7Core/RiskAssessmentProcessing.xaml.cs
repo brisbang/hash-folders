@@ -5,7 +5,7 @@ using System.Windows;
 namespace HashFolders
 {
     /// <summary>
-    /// Interaction logic for ReportProcessing.xaml
+    /// This screen refreshes the risk assessments stored in the database, allowing for external queries or quick viewing of folder information.
     /// </summary>
     public partial class RiskAssessmentProcessing : Window, IManagerWindow
     {

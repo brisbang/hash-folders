@@ -2,13 +2,13 @@ namespace HashLib7
 {
     public abstract class TaskFile(AsyncManager parent, FileInfo file) : Task(parent, TaskStatusEnum.tseProcess)
     {
-        internal FileInfo nextFile = file;
+        internal FileInfo TargetFile = file;
 
         public override void RegisterCompleted()
         {
             try
             {
-                Parent.FileScanned(nextFile.Path);
+                Parent.FileScanned(TargetFile.Path);
             }
             catch { }
         }

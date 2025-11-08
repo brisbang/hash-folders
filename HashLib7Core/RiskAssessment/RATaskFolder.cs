@@ -4,11 +4,11 @@ namespace HashLib7
     {
         public override string Verb => "Scan";
 
-        public override string Target => nextFolder;
+        public override string Target => TargetFolder;
 
         public override void Execute()
         {
-            Parent.AddFoldersAndFiles(null, Config.GetDatabase().GetFilesByPath(nextFolder));
+            Parent.AddFoldersAndFiles(null, Config.GetDatabase().GetFilesByPath(TargetFolder));
         }
     }
 }

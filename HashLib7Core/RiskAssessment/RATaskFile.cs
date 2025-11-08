@@ -9,13 +9,13 @@ namespace HashLib7
         {
         }
 
-        public override string Verb => "Record";
+        public override string Verb => "Record RA";
 
-        public override string Target => nextFile.FullName;
+        public override string Target => TargetFile.FullName;
 
         public override void Execute()
         {
-            FileManager.GetRiskAssessment(new PathFormatted(base.nextFile.FullName));
+            FileManager.GetRiskAssessment(new PathFormatted(base.TargetFile.FullName));
         }
    }
 }
