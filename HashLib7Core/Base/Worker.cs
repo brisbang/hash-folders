@@ -52,7 +52,6 @@ namespace HashLib7
                 while (!finished)
                 {
                     task = Parent.GetNextTask();
-                    enteredLoop = true;
                     if (task == null)
                         finished = true;
                     else
