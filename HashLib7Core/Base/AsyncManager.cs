@@ -53,7 +53,7 @@ namespace HashLib7
             }
             return res;
         }
-        
+
         public void ExecuteAsync(string path, int numThreads)
         {
             if (String.IsNullOrEmpty(path)) throw new InvalidOperationException("Folder not specified");
@@ -81,7 +81,7 @@ namespace HashLib7
             long nfc = NumFilesOutstanding + nfp;
             if (NumFilesProcessed > 0)
             {
-                if (this.State == StateEnum.Running || this.State == StateEnum.Suspended)
+                if (this.State == StateEnum.Running || this.State == StateEnum.Paused)
                 {
                     return DateTime.MinValue.AddTicks((long)((double)nfc * (DateTime.Now.Ticks - StartTime.Ticks) / nfp));
                 }
@@ -95,9 +95,9 @@ namespace HashLib7
             {
                 switch (this.State)
                 {
-                    case StateEnum.Suspended:
+                    case StateEnum.Paused:
                         return new TaskWait(this);
-                    case StateEnum.Aborting:
+                    case StateEnum.Stopping:
                     case StateEnum.Stopped:
                     case StateEnum.Undefined:
                         return null;
@@ -135,8 +135,8 @@ namespace HashLib7
         {
             if (_threads == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
-            if (this.State == StateEnum.Running || this.State == StateEnum.Suspended)
-                this.State = StateEnum.Aborting;
+            if (this.State == StateEnum.Running || this.State == StateEnum.Paused)
+                this.State = StateEnum.Stopping;
         }
 
         public void Suspend()
@@ -144,14 +144,14 @@ namespace HashLib7
             if (_threads == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
             if (this.State == StateEnum.Running)
-                this.State = StateEnum.Suspended;
+                this.State = StateEnum.Paused;
         }
 
         public void Resume()
         {
             if (_threads == null)
                 throw new InvalidOperationException("ExecuteAsync not invoked");
-            if (this.State == StateEnum.Suspended)
+            if (this.State == StateEnum.Paused)
                 this.State = StateEnum.Running;
         }
 
@@ -187,7 +187,7 @@ namespace HashLib7
 
         private void Finalise()
         {
-            if (State != StateEnum.Aborting)
+            if (State != StateEnum.Stopping)
                 GetFinalTask()?.Execute();
             Config.LogDebugging("State: Stopped");
             State = StateEnum.Stopped;

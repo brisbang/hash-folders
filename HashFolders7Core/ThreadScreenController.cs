@@ -124,16 +124,22 @@ namespace HashFolders
         {
             switch (state)
             {
-                case StateEnum.Aborting:
-                    btnAbort1.IsEnabled = false;
-                    btnClose1.IsEnabled = false;
-                    btnPause.IsEnabled = false;
-                    btnResume.IsEnabled = false;
-                    break;
                 case StateEnum.Running:
                     btnAbort1.IsEnabled = true;
-                    btnClose1.IsEnabled = false;
+                    btnClose1.IsEnabled = true;
                     btnPause.IsEnabled = true;
+                    btnResume.IsEnabled = false;
+                    break;
+                case StateEnum.Paused:
+                    btnAbort1.IsEnabled = true;
+                    btnClose1.IsEnabled = true;
+                    btnPause.IsEnabled = false;
+                    btnResume.IsEnabled = true;
+                    break;
+                case StateEnum.Stopping:
+                    btnAbort1.IsEnabled = false;
+                    btnClose1.IsEnabled = true;
+                    btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
                     break;
                 case StateEnum.Stopped:
@@ -142,12 +148,6 @@ namespace HashFolders
                     btnPause.IsEnabled = false;
                     btnResume.IsEnabled = false;
                     _timer.Stop();
-                    break;
-                case StateEnum.Suspended:
-                    btnAbort1.IsEnabled = true;
-                    btnClose1.IsEnabled = false;
-                    btnPause.IsEnabled = false;
-                    btnResume.IsEnabled = true;
                     break;
                 case StateEnum.Undefined:
                     btnAbort1.IsEnabled = false;

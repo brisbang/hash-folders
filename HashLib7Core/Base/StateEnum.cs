@@ -3,8 +3,8 @@
     public enum StateEnum
     {
         Running,
-        Aborting,
-        Suspended,
+        Stopping,
+        Paused,
         Stopped,
         Undefined,
     }
