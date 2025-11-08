@@ -61,7 +61,7 @@ namespace HashLib7
             try
             {
                 PathFormatted f = new(filename);
-                string sql = SafeSql("SELECT LastModified, Size, Hash FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+                string sql = SafeSql("SELECT LastModified, Size, Hash FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name);
                 using SqlConnection conn = new(_connectionString);
                 using SqlCommand cmd = new(sql, conn);
                 conn.Open();
@@ -144,9 +144,8 @@ namespace HashLib7
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    FileInfo fi = new()
+                    FileInfo fi = new(reader[0] as string, reader[1] as string)
                     {
-                        filePath = String.Format("{0}\\{1}", reader[0] as string, reader[1] as string),
                         hash = reader[2] as string,
                         size = (long) reader[3]
                     };
@@ -173,13 +172,13 @@ namespace HashLib7
             //if (FileExists(f))
             {
                 Config.LogDebugging("Creating record for " + filename);
-                string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlInsert);
             }
             else
             {
                 Config.LogDebugging("Updating record for " + filename);
-                string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}' WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}', Fire = NULL, Corruption = NULL, DiskFailure = NULL, Theft = NULL WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlUpdate);
             }
         }
@@ -199,7 +198,7 @@ namespace HashLib7
         //Used where the fingerprint no longer matches
         internal void DeleteFile(PathFormatted f)
         {
-            string sqlDelete = SafeSql("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+            string sqlDelete = SafeSql("DELETE FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name);
             ExecuteNonQuery(sqlDelete);
         }
 
@@ -228,17 +227,15 @@ namespace HashLib7
         {
             try
             {
-                string sqlHeader = SafeSql("SELECT Path, Name, Size, Hash, LastModified FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.path, f.name);
+                string sqlHeader = SafeSql("SELECT Path, Name, Size, Hash, LastModified FROM [dbo].[FileDetail] WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name);
                 using SqlConnection conn = new(_connectionString);
                 using SqlCommand cmdHeader = new(sqlHeader, conn);
                 conn.Open();
                 using SqlDataReader readerHeader = cmdHeader.ExecuteReader();
                 if (!readerHeader.Read())
                     return null;
-                FileInfoDetailed info = new()
+                FileInfoDetailed info = new(readerHeader[0] as string, readerHeader[1] as string)
                 {
-                    path = readerHeader[0] as string,
-                    filename = readerHeader[1] as string,
                     size = (long)readerHeader[2],
                     hash = readerHeader[3] as string,
                     lastModified = (DateTime)readerHeader[4],
@@ -247,13 +244,33 @@ namespace HashLib7
                 readerHeader.Close();
                 if (populateBackupLocations && info.size > 0)
                 {
-                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.path, f.name);
+                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.Path, f.Name);
                     using SqlCommand cmdBackups = new(sqlBackups, conn);
                     using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
                     while (readerBackups.Read())
                         info.backupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
                 }
                 return info;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                throw;
+            }
+        }
+
+        internal void SaveRiskAssessment(RiskAssessment res)
+        {
+            try
+            {
+                string sqlUpdate = SafeSql("UPDATE FileDetail SET Fire = {0}, Theft = {1}, Corruption = {2}, DiskFailure = {3}, RiskAssessmentUpdate = getdate() WHERE Path = '{4}' AND Name = '{5}'",
+                    res.Fire ? "1" : "0",
+                    res.Theft ? "1" : "0",
+                    res.Corruption ? "1" : "0",
+                    res.DiskFailure ? "1" : "0",
+                    res.FileInfoDetailed.Path,
+                    res.FileInfoDetailed.Name);
+                ExecuteNonQuery(sqlUpdate);
             }
             catch (Exception ex)
             {

@@ -61,7 +61,7 @@ namespace HashLib7
                 //Unicode filenames have issues here, for example: d:\misc\Tiffany\AMEB music\7th grade\Recordings\new\Telemann Fantasy No.6 in D Minor - Jasmine Choi 최나경.mp3
                 //They aren't matched when extracting from the database.
                 foreach (FileInfo f in files)
-                    previouslyRecordedFiles.Remove(f.filePath.ToUpper());
+                    previouslyRecordedFiles.Remove(f.FullName.ToUpper());
             }
         }
 

@@ -23,15 +23,15 @@ namespace HashLib7
     {
         public override string Verb => "Index";
 
-        public override string Target => base.nextFile.filePath;
+        public override string Target => base.nextFile.FullName;
 
         public override void Execute()
         {
-            FileHash fh = new(this.nextFile.filePath);
+            FileHash fh = new(this.nextFile.FullName);
             RecordMatch match = RequiresUpdatedHash(fh);
             if (match == RecordMatch.Match)
                 return;
-            Config.LogDebugging(String.Format("Hashing: {0}", this.nextFile.filePath));
+            Config.LogDebugging(String.Format("Hashing: {0}", this.nextFile.FullName));
             fh.Compute();
             Config.GetDatabase().WriteHash(fh, match == RecordMatch.NoRecord);
         }

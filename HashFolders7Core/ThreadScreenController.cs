@@ -98,7 +98,7 @@ namespace HashFolders
             {
                 lock (_mutexMessage)
                 {
-                    System.Windows.MessageBox.Show(ex.ToString());
+                    MessageBox.Show(ex.ToString());
                 }
                 Screen.Close();
             }
@@ -169,7 +169,7 @@ namespace HashFolders
                 ActivateButtonsByStatus(LastStatus);
             }
             catch (Exception ex) {
-                System.Windows.MessageBox.Show(ex.ToString(), "Thread increment", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Thread increment", MessageBoxButton.OK, MessageBoxImage.Error);
              }
         }
 
@@ -181,7 +181,7 @@ namespace HashFolders
                 ActivateButtonsByStatus(LastStatus);
             }
             catch (Exception ex) {
-                System.Windows.MessageBox.Show(ex.ToString(), "Thread decrement", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Thread decrement", MessageBoxButton.OK, MessageBoxImage.Error);
              }
         }
 
@@ -193,7 +193,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show(ex.ToString(), "Abort", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Abort", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -205,7 +205,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show(ex.ToString(), "Pause", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Pause", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -217,7 +217,7 @@ namespace HashFolders
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show(ex.ToString(), "Resume", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Resume", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

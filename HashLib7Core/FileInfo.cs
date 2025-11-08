@@ -1,14 +1,15 @@
 ﻿namespace HashLib7
 {
-    public class FileInfo
+    public class FileInfo : PathFormatted
     {
-        public string filePath;
         public long size;
         public string hash;
-        public FileInfo() { }
-        public FileInfo(string filePath)
+
+        public FileInfo(string filePath) : base(filePath)
         {
-            this.filePath = filePath;
         }
+
+        public FileInfo(string path, string name) : base(path, name)
+        { }
     }
 }

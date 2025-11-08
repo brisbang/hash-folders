@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HashFolders"
         mc:Ignorable="d"
-        Title="Indexing" Height="500" Width="750">
+        Title="Reporting" Height="500" Width="750">
     <Window.Resources>
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="Width" Value="36" />

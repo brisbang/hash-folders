@@ -40,12 +40,12 @@ namespace HashLib7
         public void AddDuplicate(PathFormatted filename)
         {
             List<string> list = ListForTarget(filename);
-            list?.Add(filename.fullName);
+            list?.Add(filename.FullName);
         }
 
         private List<string> ListForTarget(PathFormatted targetFilename)
         {
-            return Copies(Compare(_sourceFilename, _sourceDrive, targetFilename.fullName));
+            return Copies(Compare(_sourceFilename, _sourceDrive, targetFilename.FullName));
         }
 
         private static LocationEnum Compare(string sourceFilename, char sourceDrive, string targetFilename)

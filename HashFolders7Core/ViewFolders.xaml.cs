@@ -189,7 +189,8 @@ namespace HashFolders
             {
                 foreach (var file in Directory.GetFiles(folder.Path))
                 {
-                    FileList.Items.Add(new PathFormatted(file));
+                    var pf = new PathFormatted(file);
+                    FileList.Items.Add(pf);
                 }
             }
             catch { /* Ignore access errors */ }
@@ -221,13 +222,13 @@ namespace HashFolders
         {
             try
             {
-                if (!IsImageFile(filePath.fullName))
+                if (!IsImageFile(filePath.FullName))
                 {
                     HideImagePreview();
                     return;
                 }
                 // Load image with EXIF rotation
-                using var stream = new FileStream(filePath.fullName, FileMode.Open, FileAccess.Read);
+                using var stream = new FileStream(filePath.FullName, FileMode.Open, FileAccess.Read);
                 var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
                 var frame = decoder.Frames[0];
                 ImagePreview.Source = ApplyExifRotation(frame);
@@ -258,51 +259,16 @@ namespace HashFolders
                 BackupExpander.Header = $"Backups - ({info.backupLocations.Count})";
                 BackupList.ItemsSource = info.backupLocations;
             }
-            AssessRisks(info);
+            AssessRisks(FileManager.GetRiskAssessment(filePath));
 
         }
 
-        private void AssessRisks(FileInfoDetailed info)
+        private void AssessRisks(RiskAssessment ra)
         {
-            var localDriveInfo = Config.Drives.Get(info.path);
-            List<HashLib7.DriveInfo> backupDriveInfos = [];
-            if (info.backupLocations != null)
-            {
-                foreach (var backup in info.backupLocations)
-                {
-                    var driveInfo = Config.Drives.Get(backup.path);
-                    if (!backupDriveInfos.Contains(driveInfo))
-                        backupDriveInfos.Add(driveInfo);
-                }
-            }
-            bool riskTheft = true;
-            foreach (var driveInfo in backupDriveInfos)
-            {
-                if (driveInfo.MitigatesRiskOfTheft(localDriveInfo))
-                {
-                    riskTheft = false;
-                    break;
-                }
-            }
-            bool riskCorruption = info.backupLocations?.Count == 0;
-            bool riskDiskFailure = true;
-            if (localDriveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
-                riskDiskFailure = false;
-            else
-            {
-                foreach (var driveInfo in backupDriveInfos)
-                {
-                    if (driveInfo.MitigatesRiskOfDiskFailure(localDriveInfo))
-                    {
-                        riskDiskFailure = false;
-                        break;
-                    }
-                }
-            }
-            DisplayRisk(RiskDiskFailure, BorderDiskFailure, riskDiskFailure);
-            DisplayRisk(RiskCorruption, BorderCorruption, riskCorruption);
-            DisplayRisk(RiskTheft, BorderTheft, riskTheft);
-            DisplayRisk(RiskFire, BorderFire, true);
+            DisplayRisk(RiskDiskFailure, BorderDiskFailure, ra.DiskFailure);
+            DisplayRisk(RiskCorruption, BorderCorruption, ra.Corruption);
+            DisplayRisk(RiskTheft, BorderTheft, ra.Theft);
+            DisplayRisk(RiskFire, BorderFire, ra.Fire);
         }
 
         private static void DisplayRisk(TextBlock risk, Border border, bool atRisk)
@@ -426,6 +392,21 @@ namespace HashFolders
             catch (Exception ex)
             {
                 MessageBox.Show($"Error indexing folder: {ex.Message}", title, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void RiskAssessment_Click(object sender, RoutedEventArgs e)
+        {
+            const string title = "Risk Assessment";
+            try
+            {
+                RAManager assessor = new();
+                RiskAssessmentProcessing p = new(assessor);
+                LaunchScreen(assessor, p, title);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reporting folder: {ex.Message}", title, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

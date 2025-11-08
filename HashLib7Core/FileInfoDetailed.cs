@@ -3,13 +3,17 @@ using System.Collections.Generic;
 
 namespace HashLib7
 {
-    public class FileInfoDetailed
+    public class FileInfoDetailed : FileInfo
     {
-        public string path;
-        public string filename;
-        public long size;
-        public string hash;
         public DateTime lastModified;
         public List<PathFormatted> backupLocations;
+
+        public FileInfoDetailed(string filePath) : base(filePath)
+        {
+        }
+
+        public FileInfoDetailed(string path, string name) : base(path, name)
+        {
+        }
     }
 }

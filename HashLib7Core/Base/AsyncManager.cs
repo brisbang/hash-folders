@@ -271,7 +271,6 @@ namespace HashLib7
         {
             Config.LogDebugging("State: Starting");
             State = StateEnum.Running;
-            GetInitialTask()?.Execute();
         }
 
         private void Finalise()

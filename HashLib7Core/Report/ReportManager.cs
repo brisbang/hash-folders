@@ -6,13 +6,12 @@ namespace HashLib7
     public class ReportManager : AsyncManager
     {
 
-        private string _outputFile;
-        private object _mutexFile = new();
+        internal string OutputFile { get; set; }
+        private object MutexFile = new();
         internal bool HasCompletedHeader = false;
 
         public ReportManager()
         {
-            _outputFile = String.Format("{0}\\Report-{1}.csv", Config.DataPath, StartTime.ToString("yyyy-MM-dd-HHmmss"));
         }
 
         public override Task GetFileTask(FileInfo file)
@@ -37,7 +36,7 @@ namespace HashLib7
                 threadCount = NumThreadsRunning,
                 state = State,
                 duration = Duration,
-                outputFile = _outputFile,
+                outputFile = OutputFile,
                 filesOutstanding = NumFilesOutstanding,
                 filesProcessed = NumFilesProcessed,
                 workerStatuses = base.GetWorkerStatuses(),
@@ -57,9 +56,9 @@ namespace HashLib7
 
         private void LogLine(string line)
         {
-            lock (_mutexFile)
+            lock (MutexFile)
             {
-                using System.IO.FileStream outputFileStream = System.IO.File.Open(_outputFile, System.IO.FileMode.Append);
+                using System.IO.FileStream outputFileStream = System.IO.File.Open(OutputFile, System.IO.FileMode.Append);
                 byte[] outputBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(line);
                 outputFileStream.Write(outputBytes, 0, outputBytes.Length);
             }
