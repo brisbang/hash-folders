@@ -106,7 +106,7 @@
                 </Grid.ColumnDefinitions>
                 <Label Content="Result:" Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,6,0" VerticalAlignment="Top" VerticalContentAlignment="Top"/>
                 <Label Content="" Grid.Column="1" x:Name="lbResultFile" Width="447" RenderTransformOrigin="0.476,1.53" VerticalAlignment="Top" VerticalContentAlignment="Top" />
-                <Button x:Name="btnOpenResult" Grid.Column="2" Style="{StaticResource IconButton}" ToolTip="Open result file" Margin="8,0,0,0">
+                <Button x:Name="btnOpenResult" Grid.Column="2" Style="{StaticResource IconButton}" ToolTip="Open result file" Margin="8,0,0,0" IsEnabled="False">
                     <Viewbox Stretch="Uniform">
                         <Canvas Width="100" Height="100">
                             <!-- simple document icon: outline with folded corner -->

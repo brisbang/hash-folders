@@ -38,7 +38,7 @@ namespace HashLib7
             string localCopyFirst = String.Empty;
             string localBackupFirst = String.Empty;
             string remoteBackupFirst = String.Empty;
-            if (localCopies.Count > 0) localCopyFirst = SafeFilename(localCopies[0]);
+            if (localCopies.Count > 0) localCopyFirst = SafeFilename(MostDifferent(rr.filePath, localCopies));
             if (localBackups.Count > 0) localBackupFirst = SafeFilename(localBackups[0]);
             if (remoteBackups.Count > 0) remoteBackupFirst = SafeFilename(remoteBackups[0]);
 
@@ -57,6 +57,29 @@ namespace HashLib7
                localBackupFirst,
                remoteBackupFirst);
             return res;
+        }
+
+        private static string MostDifferent(string target, List<string> copies)
+        {
+            string bestMatch = null;
+            int bestScore = int.MaxValue;
+            string targetUpper = target.ToUpper();
+            foreach (string copy in copies)
+            {
+                string copyUpper = copy.ToUpper();
+                int score = 0;
+                for (int i = 0; i < target.Length; i++)
+                {
+                    if (targetUpper[i] != copyUpper[i])
+                        break;
+                }
+                if (score < bestScore)
+                {
+                    bestMatch = copy;
+                    bestScore = score;
+                }
+            }
+            return bestMatch;
         }
 
         private static string SafeFilename(string filename)
