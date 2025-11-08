@@ -6,6 +6,27 @@
         xmlns:local="clr-namespace:HashFolders"
         mc:Ignorable="d"
         Title="Indexing" Height="500" Width="750">
+    <Window.Resources>
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="0" />
+            <!-- default icon color -->
+            <Setter Property="Foreground" Value="Black" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="Gray" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
     <Grid Height="500" VerticalAlignment="Top">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,12 +47,71 @@
             <Label Content="0" HorizontalAlignment="Left" Margin="288,42,0,0" VerticalAlignment="Top" x:Name="lbNumThreadsRunning"/>
             <Label Content="Duration:" HorizontalAlignment="Left" Margin="15,163,0,0" VerticalAlignment="Top"/>
             <Label Content="00:00" HorizontalAlignment="Left" Margin="99,163,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" Name="lbDuration"/>
-            <Button x:Name="btnAbort1" Content="Abort" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75"/>
-            <Button x:Name="btnClose1" Content="Close" HorizontalAlignment="Left" Margin="250,10,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="1.711,0.532" IsEnabled="False"/>
-            <Button x:Name="btnPause" Content="Pause" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75"/>
-            <Button x:Name="btnResume" Content="Resume" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75"/>
+            <!-- Icon buttons row (Abort, Pause, Resume, Close) + gap + Add/Remove -->
+            <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left" Margin="10,10,0,0">
+                <!-- Abort: square uses Button.Foreground (set to Red) -->
+                <Button x:Name="btnAbort1" Style="{StaticResource IconButton}" ToolTip="Abort" Foreground="Red">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Rectangle Width="60" Height="60" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Canvas.Left="20" Canvas.Top="20" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- Pause: two vertical rectangles use Button.Foreground -->
+                <Button x:Name="btnPause" Style="{StaticResource IconButton}" ToolTip="Pause" Margin="8,0,0,0">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Rectangle Width="18" Height="60" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Canvas.Left="20" Canvas.Top="20" />
+                            <Rectangle Width="18" Height="60" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Canvas.Left="62" Canvas.Top="20" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- Resume: play triangle uses Button.Foreground (set to Green) -->
+                <Button x:Name="btnResume" Style="{StaticResource IconButton}" ToolTip="Resume" Margin="8,0,0,0" Foreground="Green">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Polygon Points="30,20 80,50 30,80" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- Close: X uses Button.Foreground -->
+                <Button x:Name="btnClose1" Style="{StaticResource IconButton}" ToolTip="Close" Margin="8,0,0,0" IsEnabled="False">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Path Data="M20,20 L80,80 M80,20 L20,80" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- small gap -->
+                <Rectangle Width="12" Fill="Transparent" />
+
+                <!-- Add: blue plus -->
+                <Button x:Name="btnAdd" Style="{StaticResource IconButton}" ToolTip="Add" Margin="8,0,0,0" Foreground="Blue">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Path Data="M50,20 L50,80 M20,50 L80,50" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- Remove: blue minus -->
+                <Button x:Name="btnRemove" Style="{StaticResource IconButton}" ToolTip="Remove" Margin="8,0,0,0" Foreground="Blue">
+                    <Viewbox Stretch="Uniform">
+                        <Canvas Width="100" Height="100">
+                            <Path Data="M20,50 L80,50" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </StackPanel>
             <Label Content="State:" HorizontalAlignment="Left" Margin="13,42,0,0" VerticalAlignment="Top"/>
             <Label Content="Running" HorizontalAlignment="Left" Margin="80,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbState" Width="66"/>
+            <Label Content="Result:" HorizontalAlignment="Left" Margin="13,68,0,0" VerticalAlignment="Top"/>
+            <Label Content="" HorizontalAlignment="Left" Margin="80,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbResultFile" Width="447"/>
+            <Label Content="00:00" HorizontalAlignment="Left" Margin="208,163,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.476,1.53" x:Name="lbRemaining"/>
         </Grid>
         <Grid Grid.Row="1" VerticalAlignment="Top">
             <!-- new ListView in the bottom row -->

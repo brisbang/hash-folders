@@ -416,15 +416,12 @@ namespace HashFolders
 
         private void IndexFolder_Click(object sender, RoutedEventArgs e)
         {
-            const string description = "This will index all files in the selected folder and its subfolders. This may take a while depending on the number of files.\n\nEnter the number of threads you wish to use.";
-            const string title = "Index folder";
+            const string title = "Index";
             try
             {
-                IndexManager hasher = new();
-                if (!GetNumThreads(hasher, description, title))
-                    return;
-                Indexing p = new(hasher);
-                p.ShowDialog();
+                IndexManager indexer = new();
+                Indexing p = new(indexer);
+                LaunchScreen(indexer, p, title);
             }
             catch (Exception ex)
             {
@@ -432,44 +429,30 @@ namespace HashFolders
             }
         }
 
-        private bool GetNumThreads(AsyncManager threadManager, string description, string title)
-        {
-            ArgumentNullException.ThrowIfNull(threadManager);
-            if (FolderTree.SelectedItem is not FolderItem folder)
-            {
-                MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
-                return false;
-            }
-            int threadCount = 0;
-            while (threadCount == 0)
-            {
-                string numThreads = InputBox.Show(description, title, HashLib7.UserSettings.ThreadCount.ToString());
-                if (numThreads == null)
-                    return false;
-                if (!int.TryParse(numThreads, out threadCount) || threadCount <= 0)
-                    MessageBox.Show("Please enter a valid positive integer for the number of threads.", title, MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-            HashLib7.UserSettings.ThreadCount = threadCount;
-            threadManager.ExecuteAsync(folder.Path, threadCount);
-            return true;
-        }
-
         private void ReportFolder_Click(object sender, RoutedEventArgs e)
         {
-            const string description = "This will report all files in the selected folder and its subfolders. This may take a while depending on the number of files.\n\nEnter the number of threads you wish to use.";
-            const string title = "Report folder";
+            const string title = "Report";
             try
             {
                 ReportManager reporter = new();
-                if (!GetNumThreads(reporter, description, title))
-                    return;
                 ReportProcessing p = new(reporter);
-                p.ShowDialog();
+                LaunchScreen(reporter, p, title);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error reporting folder: {ex.Message}", "Report folder", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error reporting folder: {ex.Message}", title, MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void LaunchScreen(AsyncManager mgr, Window w, string title)
+        {
+            if (FolderTree.SelectedItem is not FolderItem folder)
+            {
+                MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            mgr.ExecuteAsync(folder.Path, HashLib7.UserSettings.ThreadCount);
+            w.ShowDialog();
         }
 
         private void HandleDeleteAction()

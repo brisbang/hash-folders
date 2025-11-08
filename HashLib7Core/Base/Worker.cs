@@ -7,14 +7,13 @@ namespace HashLib7
         private System.Threading.Thread _thread = null;
         protected readonly AsyncManager Parent;
         private Task task = null;
-        private bool enteredLoop = false;
 
         internal WorkerStatus Status
         {
             get
             {
                 if (task == null)
-                    return new WorkerStatus(enteredLoop ? "Finished" : "Starting");
+                    return new WorkerStatus("");
                 return new WorkerStatus(task.Verb, task.Target);
             }
         }
