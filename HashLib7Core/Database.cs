@@ -172,13 +172,13 @@ namespace HashLib7
             //if (FileExists(f))
             {
                 Config.LogDebugging("Creating record for " + filename);
-                string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}')", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                string sqlInsert = SafeSql("INSERT INTO [dbo].[FileDetail] (Path, Name, Hash, Size, Age, LastModified, FileScanned) VALUES ('{0}', '{1}', '{2}', {3}, {4}, '{5}', getdate())", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlInsert);
             }
             else
             {
                 Config.LogDebugging("Updating record for " + filename);
-                string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}', Fire = NULL, Corruption = NULL, DiskFailure = NULL, Theft = NULL WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                string sqlUpdate = SafeSql("UPDATE [dbo].[FileDetail] SET Hash = '{2}', Size = '{3}', Age = '{4}', LastModified = '{5}', FileScanned = getdate(), Fire = NULL, Corruption = NULL, DiskFailure = NULL, Theft = NULL WHERE Path = '{0}' AND Name = '{1}'", f.Path, f.Name, hashfile, filesize.ToString(), LastModified.Ticks.ToString(), LastModified.ToString("yyyy-MM-dd HH:mm:ss"));
                 ExecuteNonQuery(sqlUpdate);
             }
         }
