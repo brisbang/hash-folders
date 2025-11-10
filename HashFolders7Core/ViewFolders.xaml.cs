@@ -401,6 +401,25 @@ namespace HashFolders
             }
         }
 
+        private void CompareFolder_Click(object sender, RoutedEventArgs e)
+        {
+            const string title = "Compare";
+            try
+            {
+                if (FolderTree.SelectedItem is not FolderItem folder)
+                {
+                    MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                FolderComparison p = new(folder.Path, ["d:\\temp", folder.Path]);
+                p.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error comparing folder: {ex.Message}", title, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void RiskAssessment_Click(object sender, RoutedEventArgs e)
         {
             const string title = "Risk Assessment";

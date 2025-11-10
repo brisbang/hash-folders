@@ -17,6 +17,7 @@
                 <Button Content="Index" Width="80" Height="20" Margin="0,0,0,5" Click="IndexFolder_Click"/>
                 <Button Content="Risk Ass." Width="80" Height="20" Margin="0,0,0,5" Click="RiskAssessment_Click"/>
                 <Button Content="Report" Width="80" Height="20" Margin="0,0,0,5" Click="ReportFolder_Click"/>
+                <Button Content="Compare" Width="80" Height="20" Margin="0,0,0,5" Click="CompareFolder_Click"/>
             </StackPanel>
 
             <!-- Existing left panel content -->
