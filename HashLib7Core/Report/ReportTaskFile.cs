@@ -67,10 +67,10 @@ namespace HashLib7
             foreach (string copy in copies)
             {
                 string copyUpper = copy.ToUpper();
-                int score = 0;
-                for (int i = 0; i < target.Length; i++)
+                int score;
+                for (score = 0; score < target.Length && score < copyUpper.Length; score++)
                 {
-                    if (targetUpper[i] != copyUpper[i])
+                    if (targetUpper[score] != copyUpper[score])
                         break;
                 }
                 if (score < bestScore)
