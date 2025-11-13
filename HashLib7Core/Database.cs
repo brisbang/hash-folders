@@ -239,7 +239,7 @@ namespace HashLib7
                     size = (long)readerHeader[2],
                     hash = readerHeader[3] as string,
                     lastModified = (DateTime)readerHeader[4],
-                    backupLocations = []
+                    BackupLocations = []
                 };
                 readerHeader.Close();
                 if (populateBackupLocations && info.size > 0)
@@ -248,7 +248,7 @@ namespace HashLib7
                     using SqlCommand cmdBackups = new(sqlBackups, conn);
                     using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
                     while (readerBackups.Read())
-                        info.backupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
+                        info.BackupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
                 }
                 return info;
             }

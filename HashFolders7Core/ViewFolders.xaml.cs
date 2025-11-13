@@ -187,7 +187,7 @@ namespace HashFolders
             FileList.Items.Clear();
             try
             {
-                foreach (var file in Directory.GetFiles(folder.Path))
+                foreach (var file in FileManager.GetFiles(folder.Path))
                 {
                     var pf = new PathFormatted(file);
                     FileList.Items.Add(pf);
@@ -248,7 +248,7 @@ namespace HashFolders
             FileToolbar.Visibility = Visibility.Visible;
             InfoHash.Text = $"Hash: {info.hash}";
             DisplaySize(info.size, sizeBars);
-            DisplaySize(info.backupLocations.Count * info.size, sizeBackupBars);
+            DisplaySize(info.BackupLocations.Count * info.size, sizeBackupBars);
             if (info.size == 0)
             {
                 BackupExpander.Header = "Backups - File is empty";
@@ -256,8 +256,8 @@ namespace HashFolders
             }
             else
             {
-                BackupExpander.Header = $"Backups - ({info.backupLocations.Count})";
-                BackupList.ItemsSource = info.backupLocations;
+                BackupExpander.Header = $"Backups - ({info.BackupLocations.Count})";
+                BackupList.ItemsSource = info.BackupLocations;
             }
             AssessRisks(FileManager.GetRiskAssessment(filePath));
 
@@ -411,7 +411,7 @@ namespace HashFolders
                     MessageBox.Show("Please select a folder", title, MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-                FolderComparison p = new(folder.Path, ["d:\\temp", folder.Path]);
+                CompareFolders p = new(folder.Path);
                 p.ShowDialog();
             }
             catch (Exception ex)

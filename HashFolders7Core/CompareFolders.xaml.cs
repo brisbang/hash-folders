@@ -5,42 +5,36 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using HashLib7;
 
 namespace HashFolders
 {
-    public partial class FolderComparison : Window
+    public partial class CompareFolders : Window
     {
         private string initialFolder;
-        private List<string> folderList;
 
-        public FolderComparison(string folder, List<string> folders)
+        public CompareFolders(string folder)
         {
             InitializeComponent();
             initialFolder = folder;
-            folderList = folders;
 
-            LeftFolder.Content = folder;
+            FileComparisonList comparison = FileManager.GetComparisonFolders(folder);
 
-            FolderSelector.ItemsSource = folderList;
+            LeftFolder.Content = initialFolder;
+            LeftFileList.ItemsSource = comparison.Files;
+            FolderSelector.ItemsSource = comparison.FolderCounts;
             FolderSelector.SelectedIndex = 0;
 
-            LoadLeftFiles();
-            LoadRightFiles(folderList[0]);
-        }
-
-        private void LoadLeftFiles()
-        {
-            if (Directory.Exists(initialFolder))
-            {
-                LeftFileList.ItemsSource = Directory.GetFiles(initialFolder).Select(Path.GetFileName).ToList();
-            }
+//            LoadRightFiles(comparison.FolderCounts[0].Folder);
         }
 
         private void LoadRightFiles(string folder)
         {
             if (!Directory.Exists(folder)) return;
 
-            var leftFiles = LeftFileList.Items.Cast<string>().ToHashSet();
+            var leftFiles = LeftFileList.Items.Cast<FileInfoDetailed>().ToHashSet();
+            //TODO: Get the files, get the FileInfoDetailed, load it in and declare IsMatch if it matches a hash on the left.
+            //TODO: Show the LHS as green as required
             var rightFiles = Directory.GetFiles(folder)
                                       .Select(f => new FileItem
                                       {
@@ -71,9 +65,9 @@ namespace HashFolders
 
         private void FolderSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (FolderSelector.SelectedItem is string folder)
+            if (FolderSelector.SelectedItem is FolderCount folder)
             {
-                LoadRightFiles(folder);
+                LoadRightFiles(folder.Folder);
             }
         }
 
