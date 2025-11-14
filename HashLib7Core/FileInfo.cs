@@ -3,7 +3,7 @@
     public class FileInfo : PathFormatted
     {
         public long size;
-        public string hash;
+        public string Hash;
 
         public FileInfo(string filePath) : base(filePath)
         {

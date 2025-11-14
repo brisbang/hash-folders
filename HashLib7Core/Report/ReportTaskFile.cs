@@ -14,14 +14,14 @@ namespace HashLib7
             ReportManager reportParent = (ReportManager)Parent;
             ReportRow rr = new()
             {
-                hash = TargetFile.hash,
+                hash = TargetFile.Hash,
                 filePath = TargetFile.FullName,
                 size = TargetFile.size
             };
             FileLocations locations = new(TargetFile.FullName);
             if (TargetFile.size > 0)
             {
-                List<PathFormatted> matchingFiles = Config.GetDatabase().GetFilesByHash(TargetFile.hash);
+                List<PathFormatted> matchingFiles = Config.GetDatabase().GetFilesByHash(TargetFile.Hash);
                 foreach (PathFormatted match in matchingFiles)
                     locations.AddDuplicate(match);
             }

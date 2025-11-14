@@ -5,8 +5,8 @@ namespace HashLib7
 {
     public class FileInfoDetailed : FileInfo
     {
-        public DateTime lastModified;
-        public List<PathFormatted> BackupLocations;
+        public DateTime lastModified { get; set; }
+        public List<PathFormatted> BackupLocations { get; set; }
 
         public FileInfoDetailed(string filePath) : base(filePath)
         {

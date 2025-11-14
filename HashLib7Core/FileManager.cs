@@ -22,7 +22,7 @@ namespace HashLib7
 
         public static FileInfoDetailed RetrieveFile(PathFormatted filePath)
         {
-            return Config.GetDatabase().GetFileInfoDetailed(filePath, true);
+            return Config.GetDatabase().GetFileInfoDetailed(filePath, Database.BackupLocationSearchEnum.AllowSameFolder);
         }
 
         public static FileComparisonList GetComparisonFolders(string path)
@@ -32,31 +32,48 @@ namespace HashLib7
             FileComparisonList res = new();
             string[] files = GetFiles(path);
             foreach (string file in files)
-            {
-                PathFormatted pf = new(file);
-                FileInfoDetailed fid = d.GetFileInfoDetailed(pf, true);
-                res.Files.Add(fid);
-                FolderCount fc = null;
-                SortedList<string, bool> foundOptions = [];
-                foreach (PathFormatted backupFolder in fid.BackupLocations)
-                {
-                    string backupPath = backupFolder.Path;
-                    if (!foundOptions.ContainsKey(backupPath))
-                    {
-                        foundOptions.Add(backupPath, false);
-                        if (locations.TryGetValue(backupPath, out fc))
-                            fc.Count++;
-                        else
-                            locations.Add(backupPath, new() { Folder = backupPath, Count = 1 });
-                    }
-                }
-            }
+                res.Files.Add(AttachBackupsForFile(d, locations, file));
+            res.FolderCounts = ConvertLocationsToFolderCount(path, locations);
+            return res;
+        }
+
+        private static List<FolderCount> ConvertLocationsToFolderCount(string path, SortedList<string, FolderCount> locations)
+        {
+            List<FolderCount> res = [];
             foreach (FolderCount fc in locations.Values)
             {
                 if (fc.Folder.ToUpper() != path.ToUpper())
-                    res.FolderCounts.Add(fc);
+                    res.Add(fc);
             }
             return res;
+        }
+
+        private static FileInfoDetailedComparison AttachBackupsForFile(Database d, SortedList<string, FolderCount> locations, string file)
+        {
+            const int maxBackups = 10;
+            PathFormatted pf = new(file);
+            FileInfoDetailedComparison fid = new(d.GetFileInfoDetailed(pf, Database.BackupLocationSearchEnum.ForceDifferentFolder));
+            if (fid.FileInfo.BackupLocations.Count > maxBackups)
+                fid.HasGeneralMatch = true;
+            else
+            {
+                SortedList<string, bool> foundOptions = [];
+                foreach (PathFormatted backupFolder in fid.FileInfo.BackupLocations)
+                    AttachBackupFolder(locations, foundOptions, backupFolder.Path);
+            }
+            return fid;
+        }
+
+        private static void AttachBackupFolder(SortedList<string, FolderCount> locations, SortedList<string, bool> foundOptions, string backupPath)
+        {
+            if (!foundOptions.ContainsKey(backupPath))
+            {
+                foundOptions.Add(backupPath, false);
+                if (locations.TryGetValue(backupPath, out FolderCount fc))
+                    fc.Count++;
+                else
+                    locations.Add(backupPath, new() { Folder = backupPath, Count = 1 });
+            }
         }
 
         public static RiskAssessment GetRiskAssessment(PathFormatted filePath)

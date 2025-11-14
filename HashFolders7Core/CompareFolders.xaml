@@ -13,12 +13,25 @@
         <StackPanel Grid.Column="0" Margin="5">
             <Label x:Name="LeftFolder" />
             <ListBox x:Name="LeftFileList" SelectionChanged="LeftFileList_SelectionChanged">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasSpecificMatch}" Value="True">
+                                <Setter Property="Background" Value="LightGreen"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HasGeneralMatch}" Value="True">
+                                <Setter Property="Background" Value="LightYellow"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text="{Binding FileInfo.Name}" />
                             <TextBlock Text=" " />
-                            <TextBlock Text="{Binding BackupLocations.Count, StringFormat='({0})'}" Foreground="Gray" Margin="6,0,0,0"/>
+                            <TextBlock Text="{Binding FileInfo.BackupLocations.Count, StringFormat='({0})'}" Foreground="Gray" Margin="6,0,0,0"/>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

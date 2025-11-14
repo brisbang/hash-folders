@@ -146,7 +146,7 @@ namespace HashLib7
                 {
                     FileInfo fi = new(reader[0] as string, reader[1] as string)
                     {
-                        hash = reader[2] as string,
+                        Hash = reader[2] as string,
                         size = (long) reader[3]
                     };
                     res.Add(fi);
@@ -223,7 +223,14 @@ namespace HashLib7
             }
         }
 
-        internal FileInfoDetailed GetFileInfoDetailed(PathFormatted f, bool populateBackupLocations)
+        internal enum BackupLocationSearchEnum
+        {
+            NoSearch,
+            ForceDifferentFolder,
+            AllowSameFolder
+        }
+
+        internal FileInfoDetailed GetFileInfoDetailed(PathFormatted f, BackupLocationSearchEnum populateBackupLocations)
         {
             try
             {
@@ -237,18 +244,26 @@ namespace HashLib7
                 FileInfoDetailed info = new(readerHeader[0] as string, readerHeader[1] as string)
                 {
                     size = (long)readerHeader[2],
-                    hash = readerHeader[3] as string,
+                    Hash = readerHeader[3] as string,
                     lastModified = (DateTime)readerHeader[4],
                     BackupLocations = []
                 };
                 readerHeader.Close();
-                if (populateBackupLocations && info.size > 0)
+                if (populateBackupLocations != BackupLocationSearchEnum.NoSearch)
                 {
-                    string sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND NOT (Path = '{1}' AND Name = '{2}') ORDER BY Path, Name", info.hash, f.Path, f.Name);
-                    using SqlCommand cmdBackups = new(sqlBackups, conn);
-                    using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
-                    while (readerBackups.Read())
-                        info.BackupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
+                    if (info.size > 0)
+                    {
+                        string sqlBackups;
+                        if (populateBackupLocations == BackupLocationSearchEnum.ForceDifferentFolder)
+                            sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND Path != '{1}' ORDER BY Path, Name", info.Hash, f.Path);
+                        else if (populateBackupLocations == BackupLocationSearchEnum.AllowSameFolder)
+                            sqlBackups = SafeSql("SELECT Path, Name FROM [dbo].[FileDetail] WHERE Hash = '{0}' AND (Path != '{1}' OR Name != '{2}') ORDER BY Path, Name", info.Hash, f.Path, f.Name);
+                        else throw new InvalidOperationException("Unknown BackupLocationSearchEnum: " + populateBackupLocations.ToString());
+                        using SqlCommand cmdBackups = new(sqlBackups, conn);
+                        using SqlDataReader readerBackups = cmdBackups.ExecuteReader();
+                        while (readerBackups.Read())
+                            info.BackupLocations.Add(new PathFormatted(readerBackups[0] as string, readerBackups[1] as string));
+                    }
                 }
                 return info;
             }

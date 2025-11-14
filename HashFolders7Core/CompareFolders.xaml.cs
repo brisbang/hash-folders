@@ -17,33 +17,63 @@ namespace HashFolders
         {
             InitializeComponent();
             initialFolder = folder;
+            Refresh();
 
-            FileComparisonList comparison = FileManager.GetComparisonFolders(folder);
+        }
+
+        private void Refresh()
+        {
+            FileComparisonList comparison = FileManager.GetComparisonFolders(initialFolder);
 
             LeftFolder.Content = initialFolder;
             LeftFileList.ItemsSource = comparison.Files;
             FolderSelector.ItemsSource = comparison.FolderCounts;
             FolderSelector.SelectedIndex = 0;
-
-//            LoadRightFiles(comparison.FolderCounts[0].Folder);
         }
 
         private void LoadRightFiles(string folder)
         {
             if (!Directory.Exists(folder)) return;
 
-            var leftFiles = LeftFileList.Items.Cast<FileInfoDetailed>().ToHashSet();
-            //TODO: Get the files, get the FileInfoDetailed, load it in and declare IsMatch if it matches a hash on the left.
-            //TODO: Show the LHS as green as required
+            HashSet<FileInfoDetailedComparison> leftFiles = (HashSet<FileInfoDetailedComparison>)LeftFileList.Items.Cast<FileInfoDetailedComparison>().ToHashSet();
+            //TODO: Get the files, get the FileInfoDetailed, load it in and declare IsMatch if it matches a hash on the left - attempted
+            //TODO: Show the LHS as green as required - attempted
+            //TODO: Order the list of file paths in descending order
+            //TODO: Left list box is not scrolling
+            //TODO: Left image is not displaying
+            ResetLeftFilesView(leftFiles);
             var rightFiles = Directory.GetFiles(folder)
                                       .Select(f => new FileItem
                                       {
                                           Name = Path.GetFileName(f),
                                           FullPath = f,
-                                          IsMatch = leftFiles.Contains(Path.GetFileName(f))
+                                          IsMatch = fidcContainsHash(leftFiles, f)
                                       }).ToList();
 
             RightFileList.ItemsSource = rightFiles;
+        }
+
+        private static void ResetLeftFilesView(HashSet<FileInfoDetailedComparison> leftFiles)
+        {
+            foreach (FileInfoDetailedComparison fidc in leftFiles)
+                fidc.HasSpecificMatch = false;
+        }
+
+        private bool fidcContainsHash(HashSet<FileInfoDetailedComparison> list, string filePath)
+        {
+            FileInfoDetailed fid = FileManager.RetrieveFile(new PathFormatted(filePath));
+            bool match = false;
+            if (fid == null)
+                return false;
+            foreach (FileInfoDetailedComparison fidc in list)
+            {
+                if (fidc.FileInfo.Hash == fid.Hash)
+                {
+                    match = true;
+                    fidc.HasSpecificMatch = true;
+                }
+            }
+            return match;
         }
 
         private void LeftFileList_SelectionChanged(object sender, SelectionChangedEventArgs e)

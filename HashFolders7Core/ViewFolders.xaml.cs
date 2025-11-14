@@ -246,7 +246,7 @@ namespace HashFolders
             RightDockPanel.Visibility = Visibility.Visible;
             var info = FileManager.RetrieveFile(filePath);
             FileToolbar.Visibility = Visibility.Visible;
-            InfoHash.Text = $"Hash: {info.hash}";
+            InfoHash.Text = $"Hash: {info.Hash}";
             DisplaySize(info.size, sizeBars);
             DisplaySize(info.BackupLocations.Count * info.size, sizeBackupBars);
             if (info.size == 0)
