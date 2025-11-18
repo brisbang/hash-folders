@@ -10,9 +10,15 @@
         </Grid.ColumnDefinitions>
 
         <!-- Left Panel -->
-        <StackPanel Grid.Column="0" Margin="5">
-            <Label x:Name="LeftFolder" />
-            <ListBox x:Name="LeftFileList" SelectionChanged="LeftFileList_SelectionChanged">
+        <Grid Grid.Column="0" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" x:Name="LeftFolder" />
+            <ListBox Grid.Row="1" x:Name="LeftFileList" SelectionChanged="LeftFileList_SelectionChanged"
+                        VerticalAlignment="Stretch"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Background" Value="White"/>
@@ -36,7 +42,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-        </StackPanel>
+        </Grid>
 
         <!-- Middle Panel -->
         <Grid Grid.Column="1">

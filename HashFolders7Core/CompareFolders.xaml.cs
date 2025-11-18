@@ -38,9 +38,7 @@ namespace HashFolders
             HashSet<FileInfoDetailedComparison> leftFiles = (HashSet<FileInfoDetailedComparison>)LeftFileList.Items.Cast<FileInfoDetailedComparison>().ToHashSet();
             //TODO: Get the files, get the FileInfoDetailed, load it in and declare IsMatch if it matches a hash on the left - attempted
             //TODO: Show the LHS as green as required - attempted
-            //TODO: Order the list of file paths in descending order
-            //TODO: Left list box is not scrolling
-            //TODO: Left image is not displaying
+            //TODO: List of green files in LHS is wrong
             ResetLeftFilesView(leftFiles);
             var rightFiles = Directory.GetFiles(folder)
                                       .Select(f => new FileItem
@@ -78,10 +76,9 @@ namespace HashFolders
 
         private void LeftFileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (LeftFileList.SelectedItem is string fileName)
+            if (LeftFileList.SelectedItem is FileInfoDetailedComparison fileName)
             {
-                string fullPath = Path.Combine(initialFolder, fileName);
-                TopImage.Source = LoadImage(fullPath);
+                TopImage.Source = LoadImage(fileName.FileInfo.FullName);
             }
         }
 
@@ -98,10 +95,11 @@ namespace HashFolders
             if (FolderSelector.SelectedItem is FolderCount folder)
             {
                 LoadRightFiles(folder.Folder);
+                BottomImage.Source = null;
             }
         }
 
-        private BitmapImage LoadImage(string path)
+        private static BitmapImage LoadImage(string path)
         {
             try
             {

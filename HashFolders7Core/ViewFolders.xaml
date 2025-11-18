@@ -1,7 +1,7 @@
 <Window x:Class="HashFolders.ViewFolders"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Folder Explorer" Height="600" Width="1000">
+        Title="Folder Explorer" Height="600" Width="1300">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />

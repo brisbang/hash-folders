@@ -34,6 +34,7 @@ namespace HashLib7
             foreach (string file in files)
                 res.Files.Add(AttachBackupsForFile(d, locations, file));
             res.FolderCounts = ConvertLocationsToFolderCount(path, locations);
+            res.FolderCounts.Reverse();
             return res;
         }
 
@@ -44,6 +45,8 @@ namespace HashLib7
             {
                 if (fc.Folder.ToUpper() != path.ToUpper())
                     res.Add(fc);
+                else
+                    break;
             }
             return res;
         }
