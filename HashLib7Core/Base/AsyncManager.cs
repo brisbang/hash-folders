@@ -313,7 +313,7 @@ namespace HashLib7
             }
         }
 
-        internal void FileScanned(string file)
+        internal void LastScanned(string file)
         {
             lock (MutexFilesFolders)
             {

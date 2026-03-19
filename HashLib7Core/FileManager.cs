@@ -25,6 +25,15 @@ namespace HashLib7
             return Config.GetDatabase().GetFileInfoDetailed(filePath, Database.BackupLocationSearchEnum.AllowSameFolder);
         }
 
+        public static FileInfoDetailed RetrieveFileFromFileSystem(PathFormatted filePath)
+        {
+            FileInfoDetailed fid = new (filePath.FullName);
+            fid.lastModified = Io.GetLastModified(filePath.FullName);
+            fid.size = Io.GetLength(filePath.FullName);
+            fid.BackupLocations = [];
+            return fid;
+        }
+
         public static FileComparisonList GetComparisonFolders(string path)
         {
             Database d = Config.GetDatabase();
@@ -82,9 +91,19 @@ namespace HashLib7
         public static RiskAssessment GetRiskAssessment(PathFormatted filePath)
         {
             FileInfoDetailed info = RetrieveFile(filePath);
-            RiskAssessment res = new(info);
-            if (info.size == 0)
+            RiskAssessment res;
+            if (info == null)
             {
+                var localDriveInfo = Config.Drives.Get(filePath.FullName);
+                res = new();
+                res.Theft = true;
+                res.Corruption = true;
+                res.DiskFailure = localDriveInfo.MitigatesRiskOfDiskFailure(localDriveInfo);
+                res.Fire = true;
+            }
+            else if (info.size == 0)
+            {
+                res = new();
                 res.Theft = false;
                 res.Corruption = false;
                 res.DiskFailure = false;
@@ -92,6 +111,7 @@ namespace HashLib7
             }
             else
             {
+                res = new(info);
                 var localDriveInfo = Config.Drives.Get(info.Path);
                 List<HashLib7.DriveInfo> backupDriveInfos = [];
                 if (info.BackupLocations != null)
@@ -128,8 +148,8 @@ namespace HashLib7
                     }
                 }
                 res.Fire = true;
+                Config.GetDatabase().SaveRiskAssessment(res);
             }
-            Config.GetDatabase().SaveRiskAssessment(res);
             return res;
         }
     }

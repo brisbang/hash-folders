@@ -13,6 +13,9 @@ namespace HashLib7
         {
             if (Config.LogDebug)
                 Config.LogDebugging(String.Format("Scanning: {0}", this.TargetFolder));
+            //Do not index the recycling bin
+            if ((this.TargetFolder.Length > 15) && (this.TargetFolder.Substring(3, 12) == "$RECYCLE.BIN"))
+                return;
             string[] fileList = Io.GetFiles(this.TargetFolder);
             List<FileInfo> files = [];
             //Could be inefficient

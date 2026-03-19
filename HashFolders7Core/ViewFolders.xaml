@@ -159,10 +159,10 @@
                 </StackPanel>
                 <!-- Action Buttons -->
                 <StackPanel x:Name="FileToolbar" Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,10" Visibility="Hidden">
-                    <Button Content="None" Click="ActionButton_Click" Margin="2"/>
+<!--                    <Button Content="None" Click="ActionButton_Click" Margin="2"/>
                     <Button Content="Basic" Click="ActionButton_Click" Margin="2"/>
                     <Button Content="High" Click="ActionButton_Click" Margin="2"/>
-                    <Button Content="Backup" Click="ActionButton_Click" Margin="2"/>
+                    <Button Content="Backup" Click="ActionButton_Click" Margin="2"/> -->
                     <Button Content="Delete" Click="ActionButton_Click" Margin="2"/>
                 </StackPanel>
 

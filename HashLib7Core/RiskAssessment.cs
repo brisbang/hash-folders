@@ -7,5 +7,10 @@ namespace HashLib7
         public bool DiskFailure;
         public bool Fire;
         public FileInfoDetailed FileInfoDetailed = fileInfoDetailed;
+
+        public RiskAssessment() : this(null)
+        {
+        
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace HashLib7
         {
             try
             {
-                Parent.FileScanned(TargetFile.Path);
+                Parent.LastScanned(TargetFile.Path);
             }
             catch { }
         }

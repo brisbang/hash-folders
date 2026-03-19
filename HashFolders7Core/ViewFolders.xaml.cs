@@ -245,8 +245,13 @@ namespace HashFolders
             // Load summary info
             RightDockPanel.Visibility = Visibility.Visible;
             var info = FileManager.RetrieveFile(filePath);
+            if (info == null)
+                info = FileManager.RetrieveFileFromFileSystem(filePath);
             FileToolbar.Visibility = Visibility.Visible;
-            InfoHash.Text = $"Hash: {info.Hash}";
+            if (info.Hash == null)
+                InfoHash.Text = "File not indexed - Reindex the folder";
+            else
+                InfoHash.Text = $"Hash: {info.Hash}";
             DisplaySize(info.size, sizeBars);
             DisplaySize(info.BackupLocations.Count * info.size, sizeBackupBars);
             if (info.size == 0)
@@ -260,7 +265,6 @@ namespace HashFolders
                 BackupList.ItemsSource = info.BackupLocations;
             }
             AssessRisks(FileManager.GetRiskAssessment(filePath));
-
         }
 
         private void AssessRisks(RiskAssessment ra)

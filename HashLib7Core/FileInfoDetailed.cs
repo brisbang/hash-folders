@@ -10,10 +10,12 @@ namespace HashLib7
 
         public FileInfoDetailed(string filePath) : base(filePath)
         {
+            BackupLocations = [];
         }
 
         public FileInfoDetailed(string path, string name) : base(path, name)
         {
+            BackupLocations = [];
         }
     }
 }

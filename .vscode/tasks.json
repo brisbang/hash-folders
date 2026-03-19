@@ -44,6 +44,29 @@
             ],
             "problemMatcher": "$msCompile"
         },
+        {
+            "label": "Build UI (Release)",
+            "command": "dotnet",
+            "dependsOn": "Build Lib (Release)",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/HashFolders7Core/HashFolders.csproj",
+                "-c", "Release"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build Lib (Release)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/HashLib7Core/HashLib7.csproj",
+                "-c", "Release"
+            ],
+            "problemMatcher": "$msCompile"
+        },
     ]
 }
     
